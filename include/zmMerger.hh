@@ -49,7 +49,7 @@ namespace zdaq {
     std::vector<uint32_t>& runHeader(){return _runHeader;}
     void stop();
     void summary();
-    Json::Value& status();
+    Json::Value status();
   private:
     bool _useEventId;
     uint32_t _nDifs;
@@ -58,7 +58,7 @@ namespace zdaq {
 	
     boost::thread_group _gThread;
     bool _running;
-    uint32_t _run,_evt;
+    uint32_t _run,_evt,_build;
     std::vector<uint32_t> _runHeader;
 
     std::map<std::string,uint64_t> _mReceived;

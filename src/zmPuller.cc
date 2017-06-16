@@ -8,24 +8,33 @@
 #include "zhelpers.hpp"
 #include "zmPuller.hh"
 #include <regex>
-
+#define ONETHREAD
 using namespace zdaq;
 zmPuller::zmPuller( zmq::context_t* c) : _context(c),_publisher(NULL)
 {
+  _connectStream.clear();
+  _bindStream.clear();
    _socks.clear();
     memset(_items,0,255*sizeof(zmq_pollitem_t));
 }
 
-void  zmPuller::addInputStream(std::string fn)
+void  zmPuller::addInputStream(std::string fn,bool server)
 {
+  if (server)
+    _bindStream.push_back(fn);
+  else
+    _connectStream.push_back(fn);
+  #ifdef ONETHREAD
   zmq::socket_t *subscriber=new zmq::socket_t((*_context),ZMQ_PULL);
- 
-  subscriber->bind(fn);
+  if (server)
+    subscriber->bind(fn);
+  else
+    subscriber->connect(fn);
   int idx=_socks.size();
   _items[idx].socket =(*subscriber);
   _items[idx].events=ZMQ_POLLIN;
   _socks.push_back(subscriber);
-  
+  #endif
  // _puller=new zmq::socket_t((*_context),ZMQ_PULL);
  // std::cout<<" binding "<<fn<<"\n";
  // try {
@@ -51,6 +60,29 @@ void  zmPuller::enablePolling() {_running=true;}
 void  zmPuller::disablePolling() {_running=false;}
 void  zmPuller::poll()
 {
+  #ifndef ONETHREAD
+  
+  for (auto x:_connectStream)
+    {
+      zmq::socket_t *subscriber=new zmq::socket_t((*_context),ZMQ_PULL);
+      subscriber->connect(x);
+      int idx=_socks.size();
+      _items[idx].socket =(*subscriber);
+      _items[idx].events=ZMQ_POLLIN;
+      _socks.push_back(subscriber);
+    }
+    for (auto x:_bindStream)
+    {
+      zmq::socket_t *subscriber=new zmq::socket_t((*_context),ZMQ_PULL);
+      subscriber->bind(x);
+      int idx=_socks.size();
+      _items[idx].socket =(*subscriber);
+      _items[idx].events=ZMQ_POLLIN;
+      _socks.push_back(subscriber);
+    }
+
+  #endif
+  std::cout<<"start polling on "<<_socks.size()<<" sockets \n";
   zmq::message_t message;
   while (_running)
     {
@@ -65,6 +97,7 @@ void  zmPuller::poll()
 		uint32_t detid,sid,gtc;
 		uint64_t bx;
 		sscanf(identity.c_str(),"DS-%d-%d %d %ld",&detid,&sid,&gtc,&bx);
+		std::cout<<identity<<std::endl;
 		_socks[i]->recv(&message);
 		if (gtc%100==0)
 		  {

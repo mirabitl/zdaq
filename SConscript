@@ -154,6 +154,8 @@ mbuil=env.Program("bin/mpubbuilder",source="src/mpubbuilder.cpp",LIBPATH=EXE_LIB
 plist.append(mbuil)
 mtestfsm=env.Program("bin/testfsm",source="src/testfsm.cpp",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 plist.append(mtestfsm)
+mtestb=env.Program("bin/testbuilder",source="src/testbuilder.cpp",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+plist.append(mtestb)
 
 myinc=[]
 for x in Glob("#include/*.hh"):

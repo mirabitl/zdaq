@@ -74,8 +74,8 @@ void dsServer::configure(zdaq::fsmmessage* m)
       std::cout <<"Creating datatsource "<<det<<" "<<sid<<std::endl;
       array_keys.append((det<<16)|sid);
       zdaq::zmPusher* ds= new zdaq::zmPusher(_context,det,sid);
-      ds->connect("ipc:///tmp/DSIN.ipc");
-      //ds->connect("tcp://lyosdhcal10:5556");
+      //ds->connect("ipc:///tmp/DSIN.ipc");
+      ds->connect("tcp://lyosdhcal10:5556");
       _sources.push_back(ds);
 
     }

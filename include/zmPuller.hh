@@ -7,7 +7,7 @@ class zmPuller
 {
 public:
   zmPuller( zmq::context_t* c);
-  void addInputStream(std::string fn);
+  void addInputStream(std::string fn,bool server=true);
   void addOutputStream(std::string fn);
   void enablePolling();
   void disablePolling(); 
@@ -15,6 +15,7 @@ public:
   void virtual processData(std::string idd,zmq::message_t *message){;}
 
 private:
+  std::vector<std::string> _connectStream,_bindStream;
   std::vector<zmq::socket_t*> _socks;
   zmq_pollitem_t _items[255];
   //zmq::socket_t* _puller;

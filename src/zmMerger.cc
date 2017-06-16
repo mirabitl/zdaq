@@ -73,7 +73,8 @@ void zmMerger::unregisterProcessor(zdaq::zmprocessor* p)
 }
 void zmMerger::registerDataSource(std::string url)
 {
-  this->addInputStream(url);
+  std::cout<<"adding input Stream "<<url<<std::endl;
+  this->addInputStream(url,true);
 }
 
 
@@ -93,6 +94,7 @@ void zmMerger::processEvent(uint32_t idx)
   if (it->second.size()!=numberOfDataSource()) return;
   if (it->first==0) return; // do not process event 0
   _evt=it->first;
+  _build++;
   //std::cout<<"full  event find " <<it->first<<std::endl;
   for (std::vector<zdaq::zmprocessor*>::iterator itp=_processors.begin();itp!=_processors.end();itp++)
     {
@@ -104,6 +106,7 @@ void zmMerger::processEvent(uint32_t idx)
   for (std::vector<zdaq::buffer*>::iterator iv=it->second.begin();iv!=it->second.end();iv++) delete (*iv);
   it->second.clear();
   _eventMap.erase(it);
+  
 
   
 }
@@ -120,6 +123,7 @@ void zmMerger::start(uint32_t nr)
   // Do the start of the the processors
   _run=nr;
   _evt=0;
+  _build=0;
   std::cout<<"run : "<<_run<<" ZMMERGER START for "<<numberOfDataSource()<<" sources"<<std::endl;
   for (std::vector<zdaq::zmprocessor*>::iterator itp=_processors.begin();itp!=_processors.end();itp++)
     {
@@ -198,4 +202,22 @@ void zmMerger::summary()
     {
       printf("%s => %d \n",x.first.c_str(),x.second);
     }
+}
+
+Json::Value zmMerger::status()
+{
+  Json::Value jrep,jsta;
+  jsta["run"]=_run;
+  jsta["event"]=_evt;
+  jsta["build"]=_build;
+  for (auto x:_mReceived)
+    {
+      Json::Value jds;
+      jds["id"]=x.first;
+      jds["received"]=(Json::Value::UInt64) x.second;
+      jrep.append(jds);
+
+    }
+  jsta["difs"]=jrep;
+  return jsta;
 }
