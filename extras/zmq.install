@@ -1,0 +1,12 @@
+cd /tmp/
+tar zxvf ${ZDAQROOT}/extras/zeromq-4.2.1.tar.gz
+cd zeromq-4.2.1/
+./configure
+make -j4
+sudo make install
+cd /tmp
+tar zxvf ${ZDAQROOT}/extras/zguide.tar.gz
+sudo cp zguide/examples/C++/zhelpers.hpp /usr/local/include
+cd /tmp
+tar zxvf ${ZDAQROOT}/extras/cppzmq.tar.gz
+sudo cp cppzmq/*.hpp /usr/local/include

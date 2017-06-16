@@ -1,0 +1,12 @@
+cd /tmp/
+tar zxvf ${ZDAQROOT}/extras/mongoose.tgz 
+cd mongoose-cpp/
+mkdir build/
+cd build/
+rm -rf *
+cp  ${ZDAQROOT}/extras/CMakeLists.txt  ../
+cmake -DEXAMPLES=ON -DWEBSOCKET=OFF  -DHAS_JSONCPP=ON ..
+make -j4
+sudo make install
+
+
