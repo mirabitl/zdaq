@@ -22,7 +22,7 @@ int main (int argc, char *argv[])
     zdaq::zmPuller r(&context);
     r.addInputStream("ipc:///tmp/DSIN.ipc");
     r.addOutputStream("tcp://lyosdhcal10:5556");
-    r.start();
+    r.enablePolling();
     r.poll();
     /**
     //  Socket to talk to server

@@ -10,22 +10,32 @@
 #include <regex>
 
 using namespace zdaq;
-zmPuller::zmPuller( zmq::context_t* c) : _context(c),_puller(NULL),_publisher(NULL)
+zmPuller::zmPuller( zmq::context_t* c) : _context(c),_publisher(NULL)
 {
+   _socks.clear();
+    memset(_items,0,255*sizeof(zmq_pollitem_t));
 }
 
 void  zmPuller::addInputStream(std::string fn)
 {
- _puller=new zmq::socket_t((*_context),ZMQ_PULL);
- std::cout<<" binding "<<fn<<"\n";
- try {
-   _puller->bind(fn);
- } catch (zmq::error_t e)
-     {
-       std::cout<<e.num()<<std::endl;
-       return;
-     }
- std::cout<<"binding complete \n";
+  zmq::socket_t *subscriber=new zmq::socket_t((*_context),ZMQ_PULL);
+ 
+  subscriber->bind(fn);
+  int idx=_socks.size();
+  _items[idx].socket =(*subscriber);
+  _items[idx].events=ZMQ_POLLIN;
+  _socks.push_back(subscriber);
+  
+ // _puller=new zmq::socket_t((*_context),ZMQ_PULL);
+ // std::cout<<" binding "<<fn<<"\n";
+ // try {
+ //   _puller->bind(fn);
+ // } catch (zmq::error_t e)
+ //     {
+ //       std::cout<<e.num()<<std::endl;
+ //       return;
+ //     }
+ // std::cout<<"binding complete \n";
 }
 void  zmPuller::addOutputStream(std::string fn)
 {
@@ -37,36 +47,52 @@ void  zmPuller::addOutputStream(std::string fn)
     
 }
 
-void  zmPuller::start() {_running=true;}
-void  zmPuller::stop() {_running=false;}
+void  zmPuller::enablePolling() {_running=true;}
+void  zmPuller::disablePolling() {_running=false;}
 void  zmPuller::poll()
 {
   zmq::message_t message;
   while (_running)
     {
-     try
-       {
-	 std::string identity = s_recv((*_puller));
-	 uint32_t detid,sid,gtc;
-	 uint64_t bx;
-	 sscanf(identity.c_str(),"DS-%d-%d %d %ld",&detid,&sid,&gtc,&bx);
-      _puller->recv(&message);
-	 if (gtc%100==0)
-	   {
-	     printf("Socket ID %s  size %d : %d %d %d %ld\n",identity.c_str(),message.size(),detid,sid,gtc,bx);}
-      if (_publisher!=NULL)
-	{
-	  s_sendmore((*_publisher),identity);
-	  _publisher->send(message);
-	  if (gtc%100==0)
-	    std::cout<<"Forwarding\n";
-	}
-       }
-      catch (zmq::error_t e)
-     {
-       std::cout<<e.num()<<std::endl;
-       continue;
-     }
+
+      int rc = zmq::poll(_items, _socks.size(), -1);
+	for (int i=0;i<_socks.size();i++)
+	  {
+	    if (_items [i].revents & ZMQ_POLLIN)
+	      {
+		try {
+		std::string identity = s_recv((*_socks[i]));
+		uint32_t detid,sid,gtc;
+		uint64_t bx;
+		sscanf(identity.c_str(),"DS-%d-%d %d %ld",&detid,&sid,&gtc,&bx);
+		_socks[i]->recv(&message);
+		if (gtc%100==0)
+		  {
+		    printf("Socket ID %s  size %d : %d %d %d %ld\n",identity.c_str(),message.size(),detid,sid,gtc,bx);
+		  }
+		//printf("Socket %d ID %s  size %d \n",i,identity.c_str(),message.size());
+		if (_publisher)
+		  {
+		    s_sendmore((*_publisher),identity);
+		    _publisher->send(message);
+		    if (gtc%100==0)
+		      std::cout<<"Forwarding\n";
+		    //std::cout<<"Forwarding\n";
+		  }
+		this->processData(identity,&message);
+		}
+		catch (zmq::error_t e)
+		  {
+		    std::cout<<e.num()<<std::endl;
+		    continue;
+		  }
+	      }
+	  }
+
+
+      
+     
+     
       ::usleep(1);
     }
 }

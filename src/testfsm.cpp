@@ -1,6 +1,8 @@
 #include "zmPusher.hh"
 #include "fsmweb.hh"
 #include "zhelpers.hpp"
+#include <boost/interprocess/sync/interprocess_mutex.hpp>
+
 class dsServer {
 public:
   dsServer(std::string name,uint32_t port);
@@ -18,6 +20,8 @@ private:
   bool _running,_readout;
   boost::thread_group _gthr;
   zmq::context_t* _context;
+  boost::interprocess::interprocess_mutex _bsem;
+
 };
 
 
@@ -111,7 +115,11 @@ void dsServer::readdata(zdaq::zmPusher *ds)
       pld[psi-1]=evt;
       bx=time(0);
       //std::cout<<"sending"<<std::endl;
+      _bsem.lock();
+
       ds->publish(bx,evt,psi*sizeof(uint32_t));
+      _bsem.unlock();
+
       //std::cout<<"sent"<<std::endl;
      evt++;
     }

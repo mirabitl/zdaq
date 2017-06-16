@@ -9,12 +9,15 @@ public:
   zmPuller( zmq::context_t* c);
   void addInputStream(std::string fn);
   void addOutputStream(std::string fn);
-  void start();
-  void stop(); 
+  void enablePolling();
+  void disablePolling(); 
   void poll();
+  void virtual processData(std::string idd,zmq::message_t *message){;}
 
 private:
-  zmq::socket_t* _puller;
+  std::vector<zmq::socket_t*> _socks;
+  zmq_pollitem_t _items[255];
+  //zmq::socket_t* _puller;
   zmq::context_t* _context;
   zmq::socket_t* _publisher;
   bool _running;
