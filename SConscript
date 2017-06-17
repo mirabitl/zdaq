@@ -155,9 +155,9 @@ mcoll=env.Program("bin/mpubcollector",source="src/mpubcollector.cpp",LIBPATH=EXE
 plist.append(mcoll)
 mbuil=env.Program("bin/mpubbuilder",source="src/mpubbuilder.cpp",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 plist.append(mbuil)
-mtestfsm=env.Program("bin/testfsm",source="src/testfsm.cpp",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+mtestfsm=env.Program("bin/testfsm",source="src/utils/testfsm.cpp",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 plist.append(mtestfsm)
-mtestb=env.Program("bin/testbuilder",source="src/testbuilder.cpp",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+mtestb=env.Program("bin/testbuilder",source="src/utils/testbuilder.cpp",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 plist.append(mtestb)
 
 myinc=[]
