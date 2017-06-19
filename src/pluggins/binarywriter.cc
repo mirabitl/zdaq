@@ -37,6 +37,11 @@ void binarywriter::start(uint32_t run)
   _event=0;
   _started=true;
 }
+void binarywriter::loadParameters(Json::Value params)
+{
+  if (params.isMember("directory"))
+    _directory=params["directory"].asString();
+}
 void binarywriter::stop()
 {
   _started=false;

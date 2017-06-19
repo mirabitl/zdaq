@@ -21,7 +21,7 @@ namespace zdaq {
     virtual void stop();
     virtual  void processEvent(uint32_t key,std::vector<zdaq::buffer*> dss);
     virtual  void processRunHeader(std::vector<uint32_t> header);
-    
+    virtual void loadParameters(Json::Value params);
     uint32_t totalSize();
     uint32_t eventNumber();
     uint32_t runNumber();

@@ -25,6 +25,7 @@ namespace zdaq {
     virtual void stop()=0;
     virtual  void processEvent(uint32_t key,std::vector<zdaq::buffer*> dss)=0;
     virtual  void processRunHeader(std::vector<uint32_t> header)=0;
+    virtual  void loadParameters(Json::Value params)=0;
   };
 
   class zmMerger : public zmPuller
