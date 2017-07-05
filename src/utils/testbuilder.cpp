@@ -74,7 +74,7 @@ void dsBuilder::configure(zdaq::fsmmessage* m)
 
     }
 
-  
+  _merger->loadParameters(jc);
   // Overwrite msg
     //Prepare complex answer
   Json::Value prep;

@@ -47,6 +47,7 @@ namespace zdaq {
     void start(uint32_t nr);
     void processEvent(uint32_t id);
     void processRunHeader();
+    void loadParameters(Json::Value params);
     std::vector<uint32_t>& runHeader(){return _runHeader;}
     void stop();
     void summary();

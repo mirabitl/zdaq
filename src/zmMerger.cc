@@ -117,6 +117,13 @@ void zmMerger::processRunHeader()
       (*itp)->processRunHeader(_runHeader);
     }
 }
+void zmMerger::loadParameters(Json::Value params)
+{
+  for (std::vector<zdaq::zmprocessor*>::iterator itp=_processors.begin();itp!=_processors.end();itp++)
+    {
+      (*itp)->loadParameters(params);
+    }
+}
     
 void zmMerger::start(uint32_t nr)
 {

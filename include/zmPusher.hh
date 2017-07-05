@@ -14,6 +14,7 @@ public:
 
   void publish(uint64_t bx, uint32_t gtc,uint32_t len);
   char* payload();
+  inline zdaq::buffer* buffer(){return _buffer;}
   inline uint32_t detectorId(){return _detId;}
   inline uint32_t sourceId(){return _sourceId;} 
 private:
