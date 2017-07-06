@@ -19,6 +19,7 @@ public:
   fsmweb* fsm();
   uint32_t instance(){return _instance;}
   uint32_t port(){return _port;}
+  std::string login(){return _login;}
 protected:
   zdaq::fsmweb* _fsm;
   std::string _hostname;
