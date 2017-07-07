@@ -87,7 +87,8 @@ void  zmPuller::poll()
   while (_running)
     {
 
-      int rc = zmq::poll(_items, _socks.size(), -1);
+      int rc = zmq::poll(_items, _socks.size(), 2000);
+      if (rc<0) continue;
 	for (int i=0;i<_socks.size();i++)
 	  {
 	    if (_items [i].revents & ZMQ_POLLIN)
