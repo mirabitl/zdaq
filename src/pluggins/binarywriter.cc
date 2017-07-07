@@ -89,15 +89,17 @@ void binarywriter::processEvent(uint32_t key,std::vector<zdaq::buffer*> vbuf)
   if (_event%100==0) 
     std::cout<<"Standard completion "<<_event<<" GTC "<<key<<" size "<<_totalSize<<std::endl;
   // To be implemented
+  printf("Event %d key %d writing TotalSize %d :\n",_event,key,_totalSize);fflush(stdout);
   if (_fdOut>0)
     {
       int ier=write(_fdOut,&_event,sizeof(uint32_t));
       ier=write(_fdOut,&theNumberOfDIF,sizeof(uint32_t));
       for (std::vector<zdaq::buffer*>::iterator iv=vbuf.begin();iv!=vbuf.end();iv++) 
 	{
-	  //printf("\t writing %d bytes",idata[SHM_BUFFER_SIZE]);
+	  printf("\t writing %d bytes \n",(*iv)->size());
 	  (*iv)->compress();
 	  uint32_t bsize=(*iv)->size();
+	  printf("\t writing %d compressed bytes\n",bsize);fflush(stdout);
 	  _totalSize+=bsize;
 	  ier=write(_fdOut,&bsize,sizeof(uint32_t));
 	  ier=write(_fdOut,(*iv)->ptr(),bsize);

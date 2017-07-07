@@ -169,6 +169,7 @@ void  zmMerger::processData(std::string idd,zmq::message_t *message)
 
   zdaq::buffer *b = new zdaq::buffer(0x100000);
   memcpy(b->ptr(),message->data(),message->size());
+  b->setSize(message->size());
   b->uncompress();
   if (it_gtc!=_eventMap.end())
     it_gtc->second.push_back(b);

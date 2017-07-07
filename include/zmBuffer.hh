@@ -81,6 +81,9 @@ namespace zdaq {
     }
     //! set the payload size
     void setPayloadSize(uint32_t s){ _psize=s;}
+    //! set the  size
+    void setSize(uint32_t s){ _psize=s-(3*sizeof(uint32_t)+sizeof(uint64_t));}
+
     //! Detector id
     uint32_t detectorId(){return _iptr[0];}
     //! Data source id
