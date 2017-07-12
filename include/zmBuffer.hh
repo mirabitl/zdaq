@@ -52,7 +52,7 @@ namespace zdaq {
        \brief Set the detector id
        \param id, the detetcor id
     */
-    void setDetectorId(uint32_t id){ _iptr[0]=id;}
+    void setDetectorId(uint32_t id){ _iptr[0]|=(id&0xFFFF);}
     /**
        \brief Set the datasource id 
        \param id, the source id
@@ -85,7 +85,7 @@ namespace zdaq {
     void setSize(uint32_t s){ _psize=s-(3*sizeof(uint32_t)+sizeof(uint64_t));}
 
     //! Detector id
-    uint32_t detectorId(){return _iptr[0];}
+    uint32_t detectorId(){return _iptr[0]&0xFFFF;}
     //! Data source id
     uint32_t dataSourceId(){return _iptr[1];}
     //! Event number
@@ -103,18 +103,21 @@ namespace zdaq {
     //! compress (gzip) the payload (size < 128k)
     void compress()
     {
-      unsigned char obuf[0x20000];
-      unsigned long ldest=0x20000;
+      if ((_iptr[0]&(1<<16))==1) return;
+      unsigned char obuf[0x100000];
+      unsigned long ldest=0x100000;
       int rc=::compress(obuf,&ldest, (unsigned char*) payload(),payloadSize());
       //std::cout<<_psize<<" "<<ldest<<std::endl;
       memcpy(payload(),obuf,ldest);
+      _iptr[0]|=(1<<16);
       _psize=ldest;
     }
     //! uncompress the payload
     void uncompress()
     {
-      unsigned char obuf[0x20000];
-      unsigned long ldest=0x20000;
+      if ((_iptr[0]&(1<<16))==0) return;
+      unsigned char obuf[0x100000];
+      unsigned long ldest=0x100000;
       int rc=::uncompress(obuf,&ldest, (unsigned char*) payload(),payloadSize());
       //std::cout<<_psize<<" "<<ldest<<std::endl;
       memcpy(payload(),obuf,ldest);
