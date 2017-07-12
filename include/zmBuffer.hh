@@ -121,6 +121,7 @@ namespace zdaq {
       int rc=::uncompress(obuf,&ldest, (unsigned char*) payload(),payloadSize());
       //std::cout<<_psize<<" "<<ldest<<std::endl;
       memcpy(payload(),obuf,ldest);
+      _iptr[0]&=~(1<<16);
       _psize=ldest;
     }
   private:
