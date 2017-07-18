@@ -151,14 +151,16 @@ void zmMerger::stop()
 {
   _running=false;
   this->disablePolling();
+  printf("ZmMeger =>Stopping the threads \n");
   _gThread.join_all();
 
   // Do the stop of the the processors
+  printf("ZmMeger =>Stopping the processors \n");
   for (std::vector<zdaq::zmprocessor*>::iterator itp=_processors.begin();itp!=_processors.end();itp++)
     {
       (*itp)->stop();
     }
-
+  printf("ZmMeger =>Leaving stop method \n");
 }
 void  zmMerger::processData(std::string idd,zmq::message_t *message)
 {
