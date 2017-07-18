@@ -98,7 +98,7 @@ void  zmPuller::poll()
 		uint32_t detid,sid,gtc;
 		uint64_t bx;
 		sscanf(identity.c_str(),"DS-%d-%d %d %ld",&detid,&sid,&gtc,&bx);
-		std::cout<<identity<<std::endl;
+		//std::cout<<identity<<std::endl;
 		_socks[i]->recv(&message);
 		if (gtc%100==0)
 		  {
