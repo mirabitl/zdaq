@@ -160,6 +160,9 @@ plist.append(mtestfsm)
 mtestb=env.Program("bin/testbuilder",source="src/utils/testbuilder.cpp",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 plist.append(mtestb)
 
+pljc=env.Program("bin/ljc",source="src/utils/ljc.cxx",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+plist.append(pljc)
+
 myinc=[]
 for x in Glob("#include/*.hh"):
   myinc.append("include/"+x.name)
