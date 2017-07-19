@@ -194,6 +194,15 @@ fsmjob::fsmjob(std::string name,uint32_t port)  : m_port(port),_login("")
     while ( getline (myfile,line) )
     {
       std::cout << line << '\n';
+      std::string::size_type n;
+      n=line.find("=");
+      if (n == std::string::npos) {
+        std::cout << " = not found\n";
+      } else {
+        std::cout << "found: " << line.substr(0,n) <<"---->"<< line.substr(n+1,line.length())<<'\n';
+	setenv( line.substr(0,n).c_str(),line.substr(n+1,line.length()).c_str(),1);
+      }
+
       _envConf.push_back(line);
     }
     myfile.close();
