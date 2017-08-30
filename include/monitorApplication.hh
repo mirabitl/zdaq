@@ -32,10 +32,11 @@ public:
   }
   virtual void userCreate(zdaq::fsmmessage* m)
   {
+    std::cout<<"On rentre dans userCreate "<<std::endl;
     if (this->parameters().isMember("TCPPort"))
       {
 	std::stringstream ss;
-	ss<<"tcp://"<<this->host()<<":"<<this->parameters()["TCPPort"].asString();
+	ss<<"tcp://"<<this->host()<<":"<<this->parameters()["TCPPort"].asUInt();
 	this->infos()["service"]=ss.str();
       }
   }
@@ -71,7 +72,8 @@ public:
       _context= new zmq::context_t(1);
       _publisher= new zmq::socket_t((*_context), ZMQ_PUB);
       std::stringstream sport;
-      sport<<"tcp://*:"<<this->parameters()["TCPport"].asUInt();
+      sport<<"tcp://*:"<<this->parameters()["TCPPort"].asUInt();
+      std::cout<<"Binding to "<<sport.str()<<std::endl;
       _publisher->bind(sport.str());
       
     }
@@ -108,6 +110,8 @@ public:
     Json::Value jstatus=this->status();
     std::string scont= fastWriter.write(jstatus);
     zmq::message_t ma2((void*)scont.c_str(), scont.length(), NULL); 
+
+    std::cout<<"publishing "<<head<<" =>"<<scont<<std::endl;
     _publisher->send(ma2);
     if (!_running) break;
     ::sleep(_period);
