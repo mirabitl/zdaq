@@ -30,14 +30,30 @@ public:
 
     
   }
-  virtual open(zdaq::fsmmessage* m)=0;
-  virtual close(zdaq::fsmmessage* m)=0;
+  virtual void userCreate(zdaq::fsmmessage* m)
+  {
+    if (this->parameters().isMember("TCPPort"))
+      {
+	std::stringstream ss;
+	ss<<"tcp://"<<this->host()<<":"<<this->parameters()["TCPPort"].asString();
+	this->infos()["service"]=ss.str();
+      }
+  }
+  virtual void open(zdaq::fsmmessage* m)=0;
+  virtual void close(zdaq::fsmmessage* m)=0;
   virtual Json::Value status()=0;
   virtual std::string hardware()=0;
   
+  void stop(zdaq::fsmmessage* m)
+  {
+    //
+    _running=false;
+    g_store.join_all();
+  }
+
   void start(zdaq::fsmmessage* m)
   {
-    LOG4CXX_INFO(_logLdaq," CMD: "<<m->command());
+    
     if (m->content().isMember("period"))
       { 
 	this->parameters()["period"]=m->content()["period"];
@@ -72,9 +88,9 @@ public:
     
 }
 
-void zdaq::monitorApplication::monitor()
-{
-  Json::FastWriter fastWriter;
+  void monitor()
+  {
+    Json::FastWriter fastWriter;
   std::stringstream sheader;
   sheader<<this->hardware()<<"@"<<this->parameters()["location"].asString();
   std::string head=sheader.str();

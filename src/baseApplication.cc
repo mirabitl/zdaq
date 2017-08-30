@@ -24,6 +24,7 @@ baseApplication::baseApplication(std::string name) : _login("")
   _fsm->addCommand("GETCONFIG",boost::bind(&baseApplication::c_getconfiguration,this,_1,_2));
   _fsm->addCommand("GETPARAM",boost::bind(&baseApplication::c_getparameter,this,_1,_2));
   _fsm->addCommand("SETPARAM",boost::bind(&baseApplication::c_setparameter,this,_1,_2));
+  _fsm->addCommand("INFO",boost::bind(&baseApplication::c_info,this,_1,_2));
   
   _fsm->setState("VOID");
   
@@ -55,6 +56,12 @@ baseApplication::baseApplication(std::string name) : _login("")
   
   _jConfig=Json::Value::null;
   _jParam=Json::Value::null;
+_jInfo=Json::Value::null;
+ _jInfo["host"]=this->host();
+ _jInfo["port"]=this->port();
+ _jInfo["name"]=this->name();
+ _jInfo["instance"]=this->instance();
+ _jInfo["login"]=this->login();
 }
 
 void  baseApplication::create(zdaq::fsmmessage* m)
@@ -194,6 +201,13 @@ void baseApplication::c_getparameter(Mongoose::Request &request, Mongoose::JsonR
   response["STATUS"]="DONE";
   response["PARAMETER"]=_jParam;
 }
+void baseApplication::c_info(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  
+
+  response["STATUS"]="DONE";
+  response["INFO"]=_jInfo;
+}
 void baseApplication::c_setparameter(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
   std::string str=request.get("PARAMETER","NONE");
@@ -213,4 +227,5 @@ void baseApplication::c_setparameter(Mongoose::Request &request, Mongoose::JsonR
 void  baseApplication::userCreate(zdaq::fsmmessage* m) {;}
 Json::Value baseApplication::configuration() { return _jConfig;}
 Json::Value& baseApplication::parameters() {return _jParam;}
+Json::Value& baseApplication::infos() {return _jInfo;}
 fsmweb* baseApplication::fsm(){return _fsm;}
