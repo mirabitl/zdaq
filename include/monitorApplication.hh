@@ -9,13 +9,14 @@ using namespace std;
 #include "ReadoutLogger.hh"
 #include <zmq.hpp>
 
+
 namespace zdaq {
   class monitorApplication : public zdaq::baseApplication
 {
 public:
   monitorApplication(std::string name) : zdaq::baseApplication(name) ,_running(false),_context(NULL),_publisher(NULL),_period(120)
   {
-
+    this->unlock();
   _fsm=this->fsm();
   
 // Register state
@@ -119,7 +120,8 @@ public:
   std::cout<<"End of monitoring task"<<std::endl;
 
 }
-
+  void lock(){theSync_.lock();}
+  void unlock(){theSync_.unlock();}
 protected:
   zdaq::fsmweb* _fsm;
   boost::thread_group g_store;
@@ -127,6 +129,7 @@ protected:
   uint32_t _period;
   zmq::context_t* _context;
   zmq::socket_t *_publisher;
+  boost::interprocess::interprocess_mutex theSync_;
 };
 };
 #endif
