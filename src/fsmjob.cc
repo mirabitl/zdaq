@@ -538,7 +538,8 @@ void fsmjob::kill(zdaq::fsmmessage* m)
 
 void fsmjob::destroy(zdaq::fsmmessage* m)
 {
-  // Done at the start of initialise
+  // Done  m_jfile.clear();m_jconf.clear();at the start of initialise
+   m_jfile.clear();m_jconf.clear();
 }
 void fsmjob::status(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
