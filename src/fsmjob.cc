@@ -543,6 +543,13 @@ void fsmjob::destroy(zdaq::fsmmessage* m)
 void fsmjob::status(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
   response["JOBS"]=this->jsonStatus();
+  std::cout<<"STATUS"<<m_jfile;
+  if (m_jfile.isMember("NAME"))
+    response["NAME"]=m_jfile["NAME"];
+  else
+    response["NAME"]="UNKNOWN";
+
+  std::cout<<"RESPONSE =>"<<response;
   response["STATUS"]="DONE";
 }
 void fsmjob::killjob(Mongoose::Request &request, Mongoose::JsonResponse &response)
