@@ -31,7 +31,7 @@ namespace zdaq {
        The buffer data are allocated and free when the buffer is destroyed 
      */
     buffer(uint32_t max_size) : _allocate(true)
-    {_ptr=new char[max_size];_iptr=(uint32_t*) _ptr;_i64ptr=(uint64_t*) &_ptr[3*sizeof(uint32_t)];_psize=0;}
+    {_ptr=new char[max_size];_iptr=(uint32_t*) _ptr;_i64ptr=(uint64_t*) &_ptr[3*sizeof(uint32_t)];_psize=0;memset(_ptr,0,max_size);}
      /**
        \brief Constructor
        \param ptr , char pointer to a memmory
@@ -52,7 +52,7 @@ namespace zdaq {
        \brief Set the detector id
        \param id, the detetcor id
     */
-    void setDetectorId(uint32_t id){ _iptr[0]|=(id&0xFFFF);}
+    void setDetectorId(uint32_t id){ _iptr[0]=(_iptr[0]&0xFFFF0000)|(id&0xFFFF);}
     /**
        \brief Set the datasource id 
        \param id, the source id

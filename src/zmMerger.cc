@@ -114,7 +114,9 @@ void zmMerger::processRunHeader()
 {
   for (std::vector<zdaq::zmprocessor*>::iterator itp=_processors.begin();itp!=_processors.end();itp++)
     {
+      std::cout<<"On enevoie"<<std::endl;
       (*itp)->processRunHeader(_runHeader);
+      std::cout<<"Apres enevoie"<<std::endl;
     }
 }
 void zmMerger::loadParameters(Json::Value params)
@@ -167,12 +169,22 @@ void  zmMerger::processData(std::string idd,zmq::message_t *message)
   uint32_t detid,sid,gtc;
   uint64_t bx;
   sscanf(idd.c_str(),"DS-%d-%d %d %ld",&detid,&sid,&gtc,&bx);
+  //printf("Message %s DS-%d-%d %d %ld\n",idd.c_str(),detid,sid,gtc,bx);
   std::map<uint64_t,std::vector<zdaq::buffer*> >::iterator it_gtc=_eventMap.find(gtc);
 
   zdaq::buffer *b = new zdaq::buffer(0x100000);
+  // uint32_t* iptr=(uint32_t*) message->data();
+  //   uint8_t* cptr=(uint8_t*) message->data();
+  //   uint64_t* iptr64=(uint64_t*) &cptr[12];
+    // printf("Message 0) %x %d %d %ld \n",iptr[0],iptr[1],iptr[2],iptr64[0]);
+
+
+  
   memcpy(b->ptr(),message->data(),message->size());
   b->setSize(message->size());
+  // printf("Message 1) %d %d %d \n",b->detectorId(),b->dataSourceId(),b->eventId());
   b->uncompress();
+  // printf("Message 2) %d %d %d \n",b->detectorId(),b->dataSourceId(),b->eventId());
   if (it_gtc!=_eventMap.end())
     it_gtc->second.push_back(b);
   else

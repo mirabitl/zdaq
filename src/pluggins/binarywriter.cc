@@ -96,7 +96,7 @@ void binarywriter::processEvent(uint32_t key,std::vector<zdaq::buffer*> vbuf)
       ier=write(_fdOut,&theNumberOfDIF,sizeof(uint32_t));
       for (std::vector<zdaq::buffer*>::iterator iv=vbuf.begin();iv!=vbuf.end();iv++) 
 	{
-	  //printf("\t writing %d bytes \n",(*iv)->size());
+	  //printf("\t %d writing %d bytes \n",(*iv)->detectorId(),(*iv)->size());
 	  (*iv)->compress();
 	  uint32_t bsize=(*iv)->size();
 	  //printf("\t writing %d compressed bytes\n",bsize);fflush(stdout);

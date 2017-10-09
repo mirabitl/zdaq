@@ -35,7 +35,7 @@ char* zmPusher::payload(){return _buffer->payload();}
 void zmPusher::publish(uint64_t bx, uint32_t gtc,uint32_t len)
   {
     std::stringstream ss;
-   
+    //printf("PUSHER detid %x \n",_buffer->detectorId());
     ss<<_header<<" "<<gtc<<" "<<bx;
     try {
       //s_sendmore((*_pusher),ss.str());
