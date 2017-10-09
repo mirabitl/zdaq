@@ -60,48 +60,53 @@ std::string fsm::processCommand(zdaq::fsmmessage* msg)
       return "ERROR";
     }
   else
-  {
-    // loop on vector of transition
-    std::vector<zdaq::fsmTransition> &vp=it->second;
-    for (std::vector<zdaq::fsmTransition>::iterator ift=vp.begin();ift!=vp.end();ift++)
-      if (ift->initialState().compare(_state)==0)
-	{
-	  std::cout<<"calling callback"<<ift->finalState()<<"\n";
-	  ift->callback()(msg);
-	  std::cout<<"Message processed\n";
-	  _state=ift->finalState();
-	  this->publishState();
-	  Json::Value jrep;
-	  std::stringstream s0;
-	  s0.str(std::string());  
-	  s0<<msg->command()<<"_DONE";
+    {
+      // loop on vector of transition
+      std::vector<zdaq::fsmTransition> &vp=it->second;
+      for (std::vector<zdaq::fsmTransition>::iterator ift=vp.begin();ift!=vp.end();ift++)
+	if (ift->initialState().compare(_state)==0)
+	  {
+#ifdef DEBUG
+	    std::cout<<"calling callback"<<ift->finalState()<<"\n";
+#endif
+	    ift->callback()(msg);
+#ifdef DEBUG
+	    std::cout<<"Message processed\n";
+#endif
+	    _state=ift->finalState();
+	    this->publishState();
+	    Json::Value jrep;
+	    std::stringstream s0;
+	    s0.str(std::string());  
+	    s0<<msg->command()<<"_DONE";
 
-	  jrep["command"]=msg->command();
-	  jrep["status"]="DONE";
-	  jrep["content"]=msg->content();
-	  //jrep["content"]["msg"]="OK";
-	  Json::FastWriter fastWriter;
-	  msg->setValue(fastWriter.write(jrep));
+	    jrep["command"]=msg->command();
+	    jrep["status"]="DONE";
+	    jrep["content"]=msg->content();
+	    //jrep["content"]["msg"]="OK";
+	    Json::FastWriter fastWriter;
+	    msg->setValue(fastWriter.write(jrep));
+#ifdef DEBUG
+	    std::cout<<"RC "<<jrep<<std::endl;
+#endif
+	    return _state;
 
-	  std::cout<<"RC "<<jrep<<std::endl;
-	  return _state;
-
-	}
-    // No initialState corresponding to _state
-    //if (it->second.initialState().compare(_state)!=0)
-    //  {
-    Json::Value jrep;
-    jrep["command"]=msg->command();
-    jrep["status"]="FAILED";
-    std::stringstream s0;
-    s0.str(std::string());  
-    s0<<"Current State="<<_state<<" is not an initial state of the command "<<msg->command();
-    jrep["content"]=msg->content();
-    jrep["content"]["answer"]=s0.str();
-    Json::FastWriter fastWriter;
-    msg->setValue(fastWriter.write(jrep));
-    return "ERROR";
-  }
+	  }
+      // No initialState corresponding to _state
+      //if (it->second.initialState().compare(_state)!=0)
+      //  {
+      Json::Value jrep;
+      jrep["command"]=msg->command();
+      jrep["status"]="FAILED";
+      std::stringstream s0;
+      s0.str(std::string());  
+      s0<<"Current State="<<_state<<" is not an initial state of the command "<<msg->command();
+      jrep["content"]=msg->content();
+      jrep["content"]["answer"]=s0.str();
+      Json::FastWriter fastWriter;
+      msg->setValue(fastWriter.write(jrep));
+      return "ERROR";
+    }
 }
 Json::Value fsm::transitionsList()
 {

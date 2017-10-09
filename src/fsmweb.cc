@@ -44,12 +44,12 @@ void fsmweb::start(uint32_t port)
 std::string fsmweb::processCommand(zdaq::fsmmessage* msg)
 {
  
-    return zdaq::fsm::processCommand(msg);
+  return zdaq::fsm::processCommand(msg);
 }
 void fsmweb::stop()
 {
-    _running=false;
-    g_d.join_all();
+  _running=false;
+  g_d.join_all();
 }
 void fsmweb::addCommand(std::string s,MGRFunctor f)
 {
@@ -59,8 +59,9 @@ void fsmweb::addCommand(std::string s,MGRFunctor f)
 
 void fsmweb::handleRequest(Request &request, JsonResponse &response)
 {
-
+#ifdef DEBUG
   std::cout<<"cmdProcess"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData()<<std::endl;
+#endif
   // Get the command and content
   Json::Value v; v.clear();
   std::string scommand=request.get("name", "NOTSET");
@@ -108,14 +109,18 @@ FSMMongo::FSMMongo(std::string name,fsmweb* f) : _name(name), _fsm(f)
 
 void FSMMongo::fsmProcess(Request &request, JsonResponse &response)
 {
-    response.setHeader("Access-Control-Allow-Origin","*");
-   std::cout<<"fsmProcess"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData()<<std::endl;
+  response.setHeader("Access-Control-Allow-Origin","*");
+#ifdef DEBUG
+  std::cout<<"fsmProcess"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData()<<std::endl;
+#endif
   // Get the command and content
   Json::Value v; v.clear();
   std::string scommand=request.get("command", "NOTSET");
   std::string scontent=request.get("content", "NOTSET");
+#ifdef DEBUG
   std::cout<<"command=>"<<scommand<<std::endl;
   std::cout<<"content=>"<<scontent<<std::endl;
+#endif
   if (scommand.compare("NOTSET")==0 || scontent.compare("NOTSET")==0)
     {
       response["status"]="No command or content given";
@@ -129,15 +134,20 @@ void FSMMongo::fsmProcess(Request &request, JsonResponse &response)
       
       v["content"]=vc;
       Json::FastWriter fastWriter;
+#ifdef DEBUG
       std::cout<<"JSON send "<<v<<std::endl;
       std::cout<<"JSON send "<<fastWriter.write(v)<<std::endl;
-
+#endif
       zdaq::fsmmessage m;
       m.setValue(fastWriter.write(v));
+#ifdef DEBUG
       std::cout<<"CALLING FSM "<<m.value();
       std::cout<<"CALLING FSM CONTENT "<<m.content();
+#endif
       std::string res=_fsm->processCommand(&m);
+#ifdef DEBUG
       std::cout<<"RC FSM "<<res<<"==>"<<m.value();
+#endif
       parsing =reader.parse(m.value(),response);
       return;
     }
