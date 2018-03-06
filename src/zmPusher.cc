@@ -16,6 +16,7 @@ zmPusher::zmPusher( zmq::context_t* c, uint32_t det,uint32_t dif) : _detId(det),
     sheader<<"DS-"<<det<<"-"<<dif;
     _header=sheader.str();
     _pusher= new zmq::socket_t((*_context), ZMQ_PUSH);
+    _pusher->setsockopt(ZMQ_SNDHWM,128);
     _buffer=new zdaq::buffer(512*1024);
 
 

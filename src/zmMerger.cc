@@ -91,6 +91,7 @@ uint32_t zmMerger::numberOfDataPacket(uint32_t k)
 void zmMerger::processEvent(uint32_t idx)
 {
   std::map<uint64_t,std::vector<zdaq::buffer*> >::iterator it=_eventMap.find(idx);
+  //printf("Processing %d Size %d for %d Map %d \n",it->first,it->second.size(),numberOfDataSource(),_eventMap.size());
   if (it->second.size()!=numberOfDataSource()) return;
   if (it->first==0) return; // do not process event 0
   _evt=it->first;
@@ -103,10 +104,12 @@ void zmMerger::processEvent(uint32_t idx)
 
   
   // remove completed events
-  for (std::vector<zdaq::buffer*>::iterator iv=it->second.begin();iv!=it->second.end();iv++) delete (*iv);
-  it->second.clear();
-  _eventMap.erase(it);
-  
+  // for (std::vector<zdaq::buffer*>::iterator iv=it->second.begin();iv!=it->second.end();iv++) delete (*iv);
+  // it->second.clear();
+  // _eventMap.erase(it);
+  printf("End of processing %d Map size %d \n",_evt,_eventMap.size());
+
+  // Clearing uncompleted event with GTC< 100 current GTC
 
   
 }
@@ -133,6 +136,14 @@ void zmMerger::start(uint32_t nr)
   _run=nr;
   _evt=0;
   _build=0;
+
+    // clear event Map
+  for (std::map<uint64_t,std::vector<zdaq::buffer*> >::iterator it=_eventMap.begin();it!=_eventMap.end();it++)
+    {
+      for (std::vector<zdaq::buffer*>::iterator jt=it->second.begin();jt!=it->second.end();jt++) delete (*jt);
+    }
+  _eventMap.clear();
+
   std::cout<<"run : "<<_run<<" ZMMERGER START for "<<numberOfDataSource()<<" sources"<<std::endl;
   for (std::vector<zdaq::zmprocessor*>::iterator itp=_processors.begin();itp!=_processors.end();itp++)
     {
@@ -166,13 +177,14 @@ void zmMerger::stop()
 }
 void  zmMerger::processData(std::string idd,zmq::message_t *message)
 {
+  //printf("Processing %s  Map size %d \n",idd.c_str(),_eventMap.size());
   uint32_t detid,sid,gtc;
   uint64_t bx;
   sscanf(idd.c_str(),"DS-%d-%d %d %ld",&detid,&sid,&gtc,&bx);
   //printf("Message %s DS-%d-%d %d %ld\n",idd.c_str(),detid,sid,gtc,bx);
   std::map<uint64_t,std::vector<zdaq::buffer*> >::iterator it_gtc=_eventMap.find(gtc);
 
-  zdaq::buffer *b = new zdaq::buffer(0x100000);
+  zdaq::buffer *b = new zdaq::buffer(512*1024);
   // uint32_t* iptr=(uint32_t*) message->data();
   //   uint8_t* cptr=(uint8_t*) message->data();
   //   uint64_t* iptr64=(uint64_t*) &cptr[12];
@@ -197,12 +209,32 @@ void  zmMerger::processData(std::string idd,zmq::message_t *message)
       _eventMap.insert(p);
       it_gtc=_eventMap.find(gtc);
     }
-  if (it_gtc->second.size()==this->numberOfDataSource())
+  int32_t lastgtc=0;
+  for ( std::map<uint64_t,std::vector<zdaq::buffer*> >::iterator itm=_eventMap.begin();itm!=_eventMap.end();itm++)
+    {
+  if (itm->second.size()==this->numberOfDataSource())
     {
       //if (it_gtc->first%100==0)
-      printf("GTC %lu %lu  %d\n",it_gtc->first,it_gtc->second.size(),this->numberOfDataSource());
-      this->processEvent(gtc);
+      //printf("GTC %lu %lu  %d\n",itm->first,itm->second.size(),this->numberOfDataSource());
+      this->processEvent(itm->first);
+      lastgtc=itm->first;
     }
+    }
+
+   for (std::map<uint64_t,std::vector<zdaq::buffer*> >::iterator it=_eventMap.begin();it!=_eventMap.end();)
+	{
+	  
+	  if (it->second.size()==this->numberOfDataSource())
+	    {
+	      //std::cout<<"Deleting Event "<<it->first<<" Last gtc "<<lastgtc<<std::endl; 
+	      for (std::vector<zdaq::buffer*>::iterator iv=it->second.begin();iv!=it->second.end();iv++) delete (*iv);
+	      it->second.clear();
+	      _eventMap.erase(it++);
+	    }
+	  else
+	    it++;
+	}
+  
 
   // Fill summary
   std::stringstream ss;
