@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+ <log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+  <!-- Output the log message to system console.
+    -->
+  <appender name="ConsoleAppender" class="org.apache.log4j.ConsoleAppender">
+    <param name="Target" value="System.out"/>
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%-5p %c{1} - %m%n"/>
+        </layout>
+  </appender>
+  <appender name="ChainsawAppenderXML" class="org.apache.log4j.XMLSocketAppender">
+        <param name="RemoteHost" value="localhost"/>
+        <param name="Port" value="4448" />
+        <layout class="org.apache.log4j.xml.XMLLayout">
+           <param name="properties" value="true" />
+           <param name="locationinfo" value="true" />
+        </layout>
+  </appender>
+  <root>
+        <priority value="all" />
+        <appender-ref ref="ConsoleAppender"/>
+        <appender-ref ref="ChainsawAppenderXML"/>
+  </root>
+  <category name="main" >
+        <priority value ="trace" />
+  </category>
+  <category name="BMP183" >
+        <priority value ="info" />
+  </category>
+  <category name="ReadoutDIF" >
+        <priority value ="info" />
+  </category>
+  <category name="ReadoutCCC" >
+        <priority value ="info" />
+  </category>
+  <category name="ReadoutFTDI" >
+        <priority value ="info" />
+  </category>
+  <category name="DaqDIF" >
+        <priority value ="info" />
+  </category>
+  <category name="DaqCCC" >
+        <priority value ="info" />
+  </category>
+  <category name="CtrlDaq" >
+        <priority value ="info" />
+  </category>
+  <category name="CtrlWriter" >
+        <priority value ="info" />
+  </category>
+  <category name="ShmProxy" >
+        <priority value ="info" />
+  </category>
+  <category name="DbManager" >
+        <priority value ="info" />
+  </category>
+  <category name="DbOracle" >
+        <priority value ="info" />
+  </category>
+  <category name="CommonShm" >
+        <priority value ="info" />
+  </category>
+  <category name="CommonMysql" >
+        <priority value ="info" />
+  </category>
+
+ </log4j:configuration>
