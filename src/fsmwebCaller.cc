@@ -175,7 +175,7 @@ std::string fsmwebCaller::sendTransition(std::string name,Json::Value cnt)
      //     return "none";
    
      std::string rc=fsmwebCaller::curlQuery((char*) ss.str().c_str());
-    //printf("return %s %s \n",ss.str().c_str(),rc.c_str());
+     //fprintf(stderr,"return %s %s \n",ss.str().c_str(),rc.c_str());
     Json::Reader reader;
     Json::Value jsta;
     bool parsingSuccessful = reader.parse(rc,jsta);

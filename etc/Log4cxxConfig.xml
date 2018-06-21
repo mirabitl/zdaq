@@ -8,18 +8,24 @@
             <param name="ConversionPattern" value="%-5p %c{1} - %m%n"/>
         </layout>
   </appender>
-  <appender name="ChainsawAppenderXML" class="org.apache.log4j.XMLSocketAppender">
-        <param name="RemoteHost" value="localhost"/>
-        <param name="Port" value="4448" />
-        <layout class="org.apache.log4j.xml.XMLLayout">
-           <param name="properties" value="true" />
-           <param name="locationinfo" value="true" />
-        </layout>
-  </appender>
+ <appender name="SYSLOG" class="org.apache.log4j.SyslogAppender"> 
+                 <param name="Threshold" value="INFO" /> 
+                 <param name="SysLogHost" value="localhost" /> 
+                 <param name="Facility" value="LOCAL6" /> 
+                 <layout class="org.apache.log4j.PatternLayout"> 
+                         <param name="ConversionPattern" 
+                                 value="%-4r %-5p %c %x - %m" /> 
+                 </layout> 
+                 <filter class="LevelRangeFilter"> 
+                         <param name="AcceptOnMatch" value="true"/> 
+                         <param name="LevelMin" value="INFO" /> 
+                         <param name="LevelMax" value="FATAL" /> 
+                 </filter> 
+ </appender> 
   <root>
         <priority value="all" />
         <appender-ref ref="ConsoleAppender"/>
-        <appender-ref ref="ChainsawAppenderXML"/>
+        <appender-ref ref="SYSLOG"/>
   </root>
   <category name="main" >
         <priority value ="trace" />
