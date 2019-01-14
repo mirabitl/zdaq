@@ -96,7 +96,7 @@ INCLUDES.append(commands.getoutput("python -c 'import distutils.sysconfig as con
 
   
 CPPFLAGS=["-pthread","-O2","-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN__ ", "-Dx86",  "-DXERCES=2", "-DDAQ_VERSION_2","-std=c++11"]
-LIBRARIES=['pthread', 'm', 'z','stdc++',boostsystem,boostthread,'curl','zmq','jsoncpp']
+LIBRARIES=['pthread', 'm', 'z','stdc++',boostsystem,boostthread,'curl','zmq','jsoncpp','log4cxx']
 
 
 #Library path XDAQ,DHCAL and ROOT + Python
