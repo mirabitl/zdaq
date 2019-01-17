@@ -150,6 +150,7 @@ plist=[]
 
 serverd=env.Program("bin/zdaq_daemon_server",source="src/exServer.cc",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 builderd=env.Program("bin/zdaq_daemon_builder",source="src/exBuilder.cc",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+triggerd=env.Program("bin/zdaq_daemon_trigger",source="src/softTrigger.cc",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 
 #env.Alias('install', [DHCAL_ROOT+"/opt/dhcal/lib",DHCAL_ROOT+"/opt/dhcal/bin"])
 

@@ -1,4 +1,4 @@
-#include "exBuilder.hh"
+#include "softTrigger.hh"
 #include <stdlib.h>
 #include <sstream>
 #include <unistd.h>
@@ -20,11 +20,11 @@ int main()
   uint32_t instance=0;
   char* wp=getenv("INSTANCE");
   if (wp!=NULL)      instance=atoi(wp);
-  s0<<"Builder-"<<instance;
+  s0<<"softTrigger-"<<instance;
   std::cout<<"Starting  "<<s0.str()<<std::endl;
 
 
-  zdaq::exBuilder* s=new zdaq::exBuilder(s0.str());
+  zdaq::softTrigger* s=new zdaq::softTrigger(s0.str());
   while (true)
     sleep((unsigned int) 3);
 }

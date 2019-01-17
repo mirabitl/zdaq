@@ -22,11 +22,11 @@ zdaq::exBuilder::exBuilder(std::string name) : zdaq::baseApplication(name),_runn
   this->fsm()->addCommand("SETHEADER",boost::bind(&zdaq::exBuilder::c_setheader,this,_1,_2));
 
   //Start server
-    char* wp=getenv("WEBPORT");
+  char* wp=getenv("WEBPORT");
   if (wp!=NULL)
     {
       LOG4CXX_INFO(_logZdaqex,__PRETTY_FUNCTION__<<"Service "<<name<<" started on port "<<atoi(wp));
-    this->fsm()->start(atoi(wp));
+      this->fsm()->start(atoi(wp));
     }
 
 
@@ -35,24 +35,24 @@ zdaq::exBuilder::exBuilder(std::string name) : zdaq::baseApplication(name),_runn
 void zdaq::exBuilder::configure(zdaq::fsmmessage* m)
 {
   LOG4CXX_INFO(_logZdaqex,__PRETTY_FUNCTION__<<"Received "<<m->command()<<" Value "<<m->value());
-// Store message content in paramters
+  // Store message content in paramters
 
-if (m->content().isMember("dsnumber"))
+  if (m->content().isMember("dsnumber"))
     { 
-        this->parameters()["dsnumber"]=m->content()["dsnumber"];
+      this->parameters()["dsnumber"]=m->content()["dsnumber"];
     }
-if (m->content().isMember("stream"))
+  if (m->content().isMember("stream"))
     { 
-        this->parameters()["stream"]=m->content()["stream"];
+      this->parameters()["stream"]=m->content()["stream"];
     }
-if (m->content().isMember("processor"))
+  if (m->content().isMember("processor"))
     { 
-        this->parameters()["processor"]=m->content()["processor"];
+      this->parameters()["processor"]=m->content()["processor"];
     }
-// Check that all paramters exists
-if (!this->parameters().isMember("dsnumber")) {LOG4CXX_ERROR(_logZdaqex,"Missing dsnumber, number of data source");return;}
-if (!this->parameters().isMember("stream")) {LOG4CXX_ERROR(_logZdaqex,"Missing stream, list of data stream");return;}
-if (!this->parameters().isMember("dsnumber")) {LOG4CXX_ERROR(_logZdaqex,"Missing processor, list of processing pluggins");return;}
+  // Check that all paramters exists
+  if (!this->parameters().isMember("dsnumber")) {LOG4CXX_ERROR(_logZdaqex,"Missing dsnumber, number of data source");return;}
+  if (!this->parameters().isMember("stream")) {LOG4CXX_ERROR(_logZdaqex,"Missing stream, list of data stream");return;}
+  if (!this->parameters().isMember("dsnumber")) {LOG4CXX_ERROR(_logZdaqex,"Missing processor, list of processing pluggins");return;}
 
   Json::Value jc=this->parameters();
   if (jc.isMember("dsnumber"))
@@ -83,7 +83,7 @@ if (!this->parameters().isMember("dsnumber")) {LOG4CXX_ERROR(_logZdaqex,"Missing
   LOG4CXX_INFO(_logZdaqex,__PRETTY_FUNCTION__<<" Setting parameters");
   _merger->loadParameters(jc);
   // Overwrite msg
-    //Prepare complex answer
+  //Prepare complex answer
   Json::Value prep;
   prep["sourceRegistered"]=array_keys;
   prep["processorRegistered"]=parray_keys;
@@ -96,11 +96,11 @@ if (!this->parameters().isMember("dsnumber")) {LOG4CXX_ERROR(_logZdaqex,"Missing
 void zdaq::exBuilder::start(zdaq::fsmmessage* m)
 {
 
-    Json::Value jc=m->content();
-    _merger->start(jc["run"].asInt());
-    _running=true;
+  Json::Value jc=m->content();
+  _merger->start(jc["run"].asInt());
+  _running=true;
 
-    LOG4CXX_INFO(_logZdaqex,__PRETTY_FUNCTION__<<"Run "<<jc["run"].asInt()<<" is started ");
+  LOG4CXX_INFO(_logZdaqex,__PRETTY_FUNCTION__<<"Run "<<jc["run"].asInt()<<" is started ");
 }
 void zdaq::exBuilder::stop(zdaq::fsmmessage* m)
 {
@@ -114,35 +114,35 @@ void zdaq::exBuilder::halt(zdaq::fsmmessage* m)
   
   
   LOG4CXX_INFO(_logZdaqex,__PRETTY_FUNCTION__<<"Received "<<m->command());
-    if (_running)
-      this->stop(m);
-    std::cout<<"Destroying"<<std::endl;
-    //stop data sources
-    _merger->clear();
+  if (_running)
+    this->stop(m);
+  std::cout<<"Destroying"<<std::endl;
+  //stop data sources
+  _merger->clear();
 }
 void zdaq::exBuilder::status(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
   //std::cout<<"dowmnload"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData()<<std::endl;
-    if (_merger!=NULL)
-      {
+  if (_merger!=NULL)
+    {
 
       response["answer"]=_merger->status();
 
-      }
-    else
-      response["answer"]="NO merger created yet";
+    }
+  else
+    response["answer"]="NO merger created yet";
 }
 void zdaq::exBuilder::registerds(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
   //std::cout<<"registerds"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData()<<std::endl;
-    if (_merger!=NULL)
-      {
-	_merger->setNumberOfDataSource(atoi(request.get("dsnumber","0").c_str()));
-	response["answer"]=atoi(request.get("dsnumber","0").c_str());
+  if (_merger!=NULL)
+    {
+      _merger->setNumberOfDataSource(atoi(request.get("dsnumber","0").c_str()));
+      response["answer"]=atoi(request.get("dsnumber","0").c_str());
 
-      }
-    else
-      response["answer"]="NO merger created yet";
+    }
+  else
+    response["answer"]="NO merger created yet";
 }
 void zdaq::exBuilder::c_setheader(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
