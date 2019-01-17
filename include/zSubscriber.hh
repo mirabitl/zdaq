@@ -43,7 +43,7 @@ namespace zdaq
     Json::Value _status;
     
   };
-typedef boost::function<void (std::vector<publishedItem*>&)> PubFunctor;
+typedef boost::function<void (std::vector<zdaq::publishedItem*>&) > PubFunctor;
     class zSubscriber 
     {
     public:
@@ -53,12 +53,12 @@ typedef boost::function<void (std::vector<publishedItem*>&)> PubFunctor;
       void poll();
       void start();
       void stop();
-      std::vector<publishedItem*>& items(){return _items;}
+      std::vector<zdaq::publishedItem*>& items(){return _items;}
       void lock(){_sync.lock();}
       void unlock(){_sync.unlock();}
       void addHandler(PubFunctor f){_handlers.push_back(f);}
     private:
-      std::vector<publishedItem*> _items;
+      std::vector<zdaq::publishedItem*> _items;
       zmq::pollitem_t _pollitems[1024];
       uint32_t _nItems;
       boost::thread_group g_d;

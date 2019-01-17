@@ -64,8 +64,7 @@ void zdaq::zSubscriber::clear()
 void zdaq::zSubscriber::addStream(std::string str)
 {
  
-	  std::cout<<"Registering "<<str<<std::endl;
-
+    LOG4CXX_INFO(_logZdaq," Registering stream: "<<str);
 	  zdaq::publishedItem* item=new  zdaq::publishedItem(str,(*_context));
 	  _items.push_back(item);
 	
