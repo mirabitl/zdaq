@@ -142,6 +142,14 @@ lzdaqex=env.SharedLibrary("#lib/zdaqex",LIBRARY_SOURCES)
 
 
 #Daemon 
+EXE_LIBPATH=LIBRARY_PATHS
+EXE_LIBPATH.append("./lib")
+EXE_LIBS=LIBRARIES
+EXE_LIBS.append("zdaqex")
+plist=[]
+
+serverd=env.Program("bin/zdaq_daemon_server",source="src/exServer.cc",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+builderd=env.Program("bin/zdaq_daemon_builder",source="src/exBuilder.cc",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 
 #env.Alias('install', [DHCAL_ROOT+"/opt/dhcal/lib",DHCAL_ROOT+"/opt/dhcal/bin"])
 

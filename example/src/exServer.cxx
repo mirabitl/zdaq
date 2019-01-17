@@ -1,7 +1,6 @@
 #include "exServer.hh"
 #include <iostream>
 #include <sstream>
-#include "zdaqLogger.hh"
 
 using namespace zdaq;
 

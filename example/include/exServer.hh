@@ -4,6 +4,9 @@
 #include "baseApplication.hh"
 # include "zmPusher.hh"
 #include "zSubscriber.hh"
+#include "zdaqLogger.hh"
+
+
 namespace zdaq {
 class exServer :public zdaq::baseApplication {
 public:

@@ -1,5 +1,4 @@
 #include "exBuilder.hh"
-#include "zdaqLogger.hh"
 
 using namespace zdaq;
 

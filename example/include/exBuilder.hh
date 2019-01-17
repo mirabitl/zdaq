@@ -4,6 +4,7 @@
 #include "baseApplication.hh"
 #include "zmMerger.hh"
 #include "binarywriter.hh"
+#include "zdaqLogger.hh"
 
 namespace zdaq {
   class exBuilder : public zdaq::baseApplication {
