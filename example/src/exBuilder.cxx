@@ -80,7 +80,7 @@ void zdaq::exBuilder::configure(zdaq::fsmmessage* m)
       parray_keys.append((*it).asString());
     }
 
-  LOG4CXX_INFO(_logZdaqex,__PRETTY_FUNCTION__<<" Setting parameters");
+  LOG4CXX_INFO(_logZdaqex,__PRETTY_FUNCTION__<<" Setting parameters for processors and merger ");
   _merger->loadParameters(jc);
   // Overwrite msg
   //Prepare complex answer
