@@ -8,7 +8,7 @@
 #include "zSubscriber.hh"
 #include <stdio.h>
 #include <stdlib.h>
-#include <sqlite3.h> 
+//#include <sqlite3.h> 
 #include <string>
 #include "zhelpers.hpp"
 #include <boost/algorithm/string.hpp>
