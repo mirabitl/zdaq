@@ -1,0 +1,93 @@
+{
+    "HOSTS": {
+	"lyocmsmu02": [
+	    {
+		"ARGS": [],
+		"ENV": [
+		    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+		    "DIM_DNS_NODE=lyosdhcal10",
+		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/levbdim/lib:/opt/dhcal/lib:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/dim/linux:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/root/lib::/opt/dhcal/lcio/v02-00/lib/:$LD_LIBRARY_PATH",
+		    "WEBPORT=42000"
+		],
+		"NAME": "MDCCSERVER",
+		"PARAMETER": {
+		    "device": "MDCC01",
+		    "spilloff": 1000,
+		    "spillon": 1000000,
+		    "spillregister": 32
+		},
+		"PROGRAM": "/opt/dhcal/bin/lydaq_daemon_Mdcc"
+	    },
+	    {
+		"ARGS": [],
+		"ENV": [
+		    "DIM_DNS_NODE=lyopc252",
+		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/levbdim/lib:/opt/dhcal/lib:/opt/dhcal/root/lib:/opt/dhcal/dim/linux:/opt/dhcal/lcio/v02-00/lib/:$LD_LIBRARY_PATH",
+		    "WEBPORT=45000"
+		],
+		"NAME": "FDAQ",
+		"PARAMETER": {
+		    "s_ctrlreg": "0x815A1B40"
+		},
+		"PROGRAM": "/opt/dhcal/bin/lydaq_daemon_Control"
+	    },
+	    {
+		"ARGS": [],
+		"ENV": [
+		    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/levbdim/lib:/opt/dhcal/lib:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/dim/linux:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/root/lib::/opt/dhcal/lcio/v02-00/lib/:$LD_LIBRARY_PATH",
+		    "WEBPORT=40000"
+		],
+		"NAME": "TDCSERVER",
+		"PARAMETER": {
+		    "publish": "tcp://lyocmsmu01:5556",
+		    "tdc": {
+			"db": {
+			    "mode": "DB",
+			    "state": "FEBv2_8"
+			},
+			"network": "192.168.10."
+		    }
+		},
+		"PROGRAM": "/opt/dhcal/bin/lydaq_daemon_FebCms"
+	    },
+	    {
+		"ARGS": [],
+		"ENV": [
+		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/lib:/opt/dhcal/lcio/v02-00/lib/:/opt/dhcal/root/lib:$LD_LIBRARY_PATH",
+		    "WEBPORT=51000"
+		],
+		"NAME": "WRITER",
+		"PARAMETER": {
+		    "dif": 1,
+		    "directory": "/data/local/FE1PR2",
+		    "processor": [
+			"binarywriter",
+			"lydaq_pluggins_tdcwriter",
+			"lydaq_pluggins_monitor"
+		    ],
+		    "shmpath": "/dev/shm/monitor",
+		    "stream": [
+			"tcp://*:5556"
+		    ]
+		},
+		"PROGRAM": "/opt/dhcal/bin/lydaq_daemon_Builder"
+	    },
+	    {
+		"ARGS": [],
+		"ENV": [
+		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/lib:/opt/dhcal/lcio/v02-00/lib/:/opt/dhcal/root/lib:$LD_LIBRARY_PATH",
+		    "WEBPORT=55555"
+		],
+		"NAME": "ANALYZER",
+		"PARAMETER": {
+		    "analyzer": "TdcAnalyzer",
+		    "directory": "/data/local/FE1PR2/",
+		    "geometry": "/opt/TdcAnalysis/gifpp_geom.json"
+		},
+		"PROGRAM": "/opt/dhcal/bin/rb_daemon"
+	    }
+	]
+    },
+    "NAME": "testv2_8"
+}
