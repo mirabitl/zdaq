@@ -82,7 +82,7 @@
 		    "dif": 1,
 		    "directory": "/tmp",
 		    "processor": [
-			"binarywriter",
+			"binarywriter"
 		    ],
 		    "stream": [
 			"tcp://*:5556"
