@@ -20,6 +20,7 @@ zdaq::softTrigger::softTrigger(std::string name) : zdaq::baseApplication(name),_
   _fsm->addTransition("HALT","CONFIGURED","CREATED",boost::bind(&zdaq::softTrigger::halt, this,_1));
   
   _fsm->addCommand("STATUS",boost::bind(&zdaq::softTrigger::c_status, this,_1,_2));
+  _fsm->addCommand("PERIOD",boost::bind(&zdaq::softTrigger::c_period, this,_1,_2));
   
   //Start server
   
@@ -147,6 +148,15 @@ void zdaq::softTrigger::halt(zdaq::fsmmessage* m)
 void zdaq::softTrigger::c_status(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
   std::cout<<"list"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData()<<std::endl;
+  response["answer"]=this->status();
+
+}
+void zdaq::softTrigger::c_period(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  std::cout<<"list"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData()<<std::endl;
+  uint32_t period=atoi(request.get("period","1000000").c_str());
+  _microsleep=period;
+    
   response["answer"]=this->status();
 
 }

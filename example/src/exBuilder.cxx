@@ -52,7 +52,7 @@ void zdaq::exBuilder::configure(zdaq::fsmmessage* m)
   // Check that all paramters exists
   if (!this->parameters().isMember("dsnumber")) {LOG4CXX_ERROR(_logZdaqex,"Missing dsnumber, number of data source");return;}
   if (!this->parameters().isMember("stream")) {LOG4CXX_ERROR(_logZdaqex,"Missing stream, list of data stream");return;}
-  if (!this->parameters().isMember("dsnumber")) {LOG4CXX_ERROR(_logZdaqex,"Missing processor, list of processing pluggins");return;}
+  if (!this->parameters().isMember("processor")) {LOG4CXX_ERROR(_logZdaqex,"Missing processor, list of processing pluggins");return;}
 
   Json::Value jc=this->parameters();
   if (jc.isMember("dsnumber"))
