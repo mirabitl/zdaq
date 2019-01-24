@@ -12,6 +12,7 @@
 		"NAME": "EXSERVER",
 		"PARAMETER": {
 		    "mode":"TRIGGER",
+		    "paysize":0,
 		    "detid": 100,
 		    "sourceid":[2,3],
 		    "trigsub":"tcp://lyopc252:5666",
@@ -32,6 +33,7 @@
 		"NAME": "EXSERVER",
 		"PARAMETER": {
 		    "mode":"TRIGGER",
+		    "paysize":0,
 		    "detid": 100,
 		    "sourceid":[12,13],
 		    "trigsub":"tcp://lyopc252:5666",
@@ -53,6 +55,7 @@
 		"NAME": "EXSERVER",
 		"PARAMETER": {
 		    "mode":"TRIGGER",
+		    "paysize":0,
 		    "detid": 100,
 		    "sourceid":[22,23,24],
 		    "trigsub":"tcp://lyopc252:5666",
