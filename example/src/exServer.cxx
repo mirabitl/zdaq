@@ -84,7 +84,7 @@ void zdaq::exServer::configure(zdaq::fsmmessage* m)
   if (!this->parameters().isMember("paysize")) {LOG4CXX_ERROR(_logZdaqex,"Missing paysize payload size");return;}
   if (!this->parameters().isMember("mode")) {LOG4CXX_ERROR(_logZdaqex,"Missing mode TRIGGER/ALONE");return;}
 
-  Json::Value jc=m->content();
+  Json::Value jc=this->parameters();
   int32_t det=jc["detid"].asInt();
   const Json::Value& books = jc["sourceid"];
   Json::Value array_keys;
