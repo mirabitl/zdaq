@@ -85,7 +85,7 @@
 		],
 		"NAME": "BUILDER",
 		"PARAMETER": {
-		    "dif": 1,
+		    "dsnumber": 7,
 		    "directory": "/tmp",
 		    "processor": [
 			"binarywriter"
