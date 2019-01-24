@@ -5,89 +5,107 @@
 		"ARGS": [],
 		"ENV": [
 		    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-		    "DIM_DNS_NODE=lyosdhcal10",
-		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/levbdim/lib:/opt/dhcal/lib:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/dim/linux:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/root/lib::/opt/dhcal/lcio/v02-00/lib/:$LD_LIBRARY_PATH",
+		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/zdaq/lib:/opt/zdaq/example/lib:$LD_LIBRARY_PATH",
+		    "INSTANCE=0",
 		    "WEBPORT=42000"
 		],
-		"NAME": "MDCCSERVER",
+		"NAME": "EXSERVER",
 		"PARAMETER": {
-		    "device": "MDCC01",
-		    "spilloff": 1000,
-		    "spillon": 1000000,
-		    "spillregister": 32
+		    "detid": 100,
+		    "sourceid":[2,3],
+		    "trigsub":"tcp://lyopc252:5666",
+		    "pushdata":"tcp://lyopc252:5556"
 		},
-		"PROGRAM": "/opt/dhcal/bin/lydaq_daemon_Mdcc"
-	    },
-	    {
-		"ARGS": [],
-		"ENV": [
-		    "DIM_DNS_NODE=lyopc252",
-		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/levbdim/lib:/opt/dhcal/lib:/opt/dhcal/root/lib:/opt/dhcal/dim/linux:/opt/dhcal/lcio/v02-00/lib/:$LD_LIBRARY_PATH",
-		    "WEBPORT=45000"
-		],
-		"NAME": "FDAQ",
-		"PARAMETER": {
-		    "s_ctrlreg": "0x815A1B40"
-		},
-		"PROGRAM": "/opt/dhcal/bin/lydaq_daemon_Control"
-	    },
+		"PROGRAM": "/opt/zdaq/example/bin/zdaq_daemon_server"
+	    }
+	],
+	"lyocmsmu03": [
 	    {
 		"ARGS": [],
 		"ENV": [
 		    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/levbdim/lib:/opt/dhcal/lib:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/dim/linux:/opt/dhcal/DQM4HEP/lib:/opt/dhcal/root/lib::/opt/dhcal/lcio/v02-00/lib/:$LD_LIBRARY_PATH",
-		    "WEBPORT=40000"
+		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/zdaq/lib:/opt/zdaq/example/lib:$LD_LIBRARY_PATH",
+		    "INSTANCE=1",
+		    "WEBPORT=42000"
 		],
-		"NAME": "TDCSERVER",
+		"NAME": "EXSERVER",
 		"PARAMETER": {
-		    "publish": "tcp://lyocmsmu01:5556",
-		    "tdc": {
-			"db": {
-			    "mode": "DB",
-			    "state": "FEBv2_8"
-			},
-			"network": "192.168.10."
-		    }
+		    "detid": 100,
+		    "sourceid":[12,13],
+		    "trigsub":"tcp://lyopc252:5666",
+		    "pushdata":"tcp://lyopc252:5556"
 		},
-		"PROGRAM": "/opt/dhcal/bin/lydaq_daemon_FebCms"
+		"PROGRAM": "/opt/zdaq/example/bin/zdaq_daemon_server"
+	    }
+	],
+	"lyocmsmu04": [
+	    {
+		"ARGS": [],
+		"ENV": [
+		    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/zdaq/lib:/opt/zdaq/example/lib:$LD_LIBRARY_PATH",
+		    "INSTANCE=2",
+		    "WEBPORT=42000"
+		    
+		],
+		"NAME": "EXSERVER",
+		"PARAMETER": {
+		    "detid": 100,
+		    "sourceid":[22,23,24],
+		    "trigsub":"tcp://lyopc252:5666",
+		    "pushdata":"tcp://lyopc252:5556"
+		},
+		"PROGRAM": "/opt/zdaq/example/bin/zdaq_daemon_server"
+	    }
+	],
+	"lyopc252":[
+	    {
+		"ARGS": [],
+		"ENV": [
+		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/zdaq/lib:/opt/zdaq/example/lib:$LD_LIBRARY_PATH",
+		    "WEBPORT=45000"
+		],
+		"NAME": "RUNCONTROL",
+		"PARAMETER": {
+		    "s_ctrlreg": "0x815A1B40"
+		},
+		"PROGRAM": "/opt/zdaq/example/bin/zdaq_daemon_runcontrol"
 	    },
 	    {
 		"ARGS": [],
 		"ENV": [
-		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/lib:/opt/dhcal/lcio/v02-00/lib/:/opt/dhcal/root/lib:$LD_LIBRARY_PATH",
-		    "WEBPORT=51000"
+		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/zdaq/lib:/opt/zdaq/example/lib:$LD_LIBRARY_PATH",
+		    "WEBPORT=46000"
 		],
-		"NAME": "WRITER",
+		"NAME": "BUILDER",
 		"PARAMETER": {
 		    "dif": 1,
-		    "directory": "/data/local/FE1PR2",
+		    "directory": "/tmp",
 		    "processor": [
 			"binarywriter",
-			"lydaq_pluggins_tdcwriter",
-			"lydaq_pluggins_monitor"
 		    ],
-		    "shmpath": "/dev/shm/monitor",
 		    "stream": [
 			"tcp://*:5556"
 		    ]
 		},
-		"PROGRAM": "/opt/dhcal/bin/lydaq_daemon_Builder"
+		"PROGRAM": "/opt/zdaq/example/bin/zdaq_daemon_builder"
 	    },
 	    {
 		"ARGS": [],
 		"ENV": [
-		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/dhcal/lib:/opt/dhcal/lcio/v02-00/lib/:/opt/dhcal/root/lib:$LD_LIBRARY_PATH",
-		    "WEBPORT=55555"
+		    "LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/zdaq/lib:/opt/zdaq/example/lib:$LD_LIBRARY_PATH",
+		    "WEBPORT=47000"
 		],
-		"NAME": "ANALYZER",
+		"NAME": "TRIGGER",
 		"PARAMETER": {
-		    "analyzer": "TdcAnalyzer",
-		    "directory": "/data/local/FE1PR2/",
-		    "geometry": "/opt/TdcAnalysis/gifpp_geom.json"
+		    "datasize": 1024,
+		    "tcpPort": 5666,
+		    "microsleep": 1000000
 		},
-		"PROGRAM": "/opt/dhcal/bin/rb_daemon"
+		"PROGRAM": "/opt/zdaq/example/bin/zdaq_daemon_trigger"
 	    }
+	    
 	]
     },
-    "NAME": "testv2_8"
+    "NAME": "testzdaq_1"
 }
