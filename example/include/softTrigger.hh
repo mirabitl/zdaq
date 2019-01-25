@@ -17,6 +17,7 @@ namespace zdaq {
     Json::Value status();
     void c_status(Mongoose::Request &request, Mongoose::JsonResponse &response);
     void c_period(Mongoose::Request &request, Mongoose::JsonResponse &response);
+    void c_size(Mongoose::Request &request, Mongoose::JsonResponse &response);
     bool running(){return _running;}
   private:
     bool _running,_readout;

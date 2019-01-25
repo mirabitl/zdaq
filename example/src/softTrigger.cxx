@@ -21,6 +21,7 @@ zdaq::softTrigger::softTrigger(std::string name) : zdaq::baseApplication(name),_
   
   _fsm->addCommand("STATUS",boost::bind(&zdaq::softTrigger::c_status, this,_1,_2));
   _fsm->addCommand("PERIOD",boost::bind(&zdaq::softTrigger::c_period, this,_1,_2));
+  _fsm->addCommand("SIZE",boost::bind(&zdaq::softTrigger::c_size, this,_1,_2));
   
   //Start server
   
@@ -78,6 +79,7 @@ Json::Value zdaq::softTrigger::status()
   Json::Value j((Json::Value::UInt64) _bx);
   r["bxid"]=j;
   r["size"]=_datasize;
+  r["period"]=_microsleep;
   return r;
 }
 
@@ -156,6 +158,15 @@ void zdaq::softTrigger::c_period(Mongoose::Request &request, Mongoose::JsonRespo
   std::cout<<"list"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData()<<std::endl;
   uint32_t period=atoi(request.get("period","1000000").c_str());
   _microsleep=period;
+    
+  response["answer"]=this->status();
+
+}
+void zdaq::softTrigger::c_size(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  std::cout<<"list"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData()<<std::endl;
+  uint32_t psize=atoi(request.get("size","32").c_str());
+  _datasize=psize;
     
   response["answer"]=this->status();
 
