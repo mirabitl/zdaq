@@ -35,7 +35,7 @@ namespace zdaq {
     uint32_t _event;
     uint64_t _bx;
     zmq::context_t* _context;
-
+    uint32_t _plrand[0x20000];
     // Trigger Polling
   
     zdaq::zSubscriber* _triggerSubscriber;

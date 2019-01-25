@@ -34,6 +34,7 @@ zdaq::exServer::exServer(std::string name) : zdaq::baseApplication(name),_runnin
   _context=new zmq::context_t();
   _triggerSubscriber = new  zdaq::zSubscriber(_context); 
   _triggerSubscriber->addHandler(boost::bind(&zdaq::exServer::checkTrigger, this,_1));
+    for (int i=1;i<0x20000;i++) _plrand[i]= std::rand();
 }
 
 void zdaq::exServer::configure(zdaq::fsmmessage* m)
@@ -119,7 +120,7 @@ void zdaq::exServer::fillEvent(uint32_t event,uint64_t bx,zdaq::zmPusher* ds,uin
   // Payload address
   uint32_t* pld=(uint32_t*) ds->payload();
   // Random data with tags at start and end of data payload 
-  for (int i=1;i<eventSize-1;i++) pld[i]= std::rand();
+  for (int i=1;i<eventSize-1;i++) pld[i]= _plrand[i];
   pld[0]=event;
   pld[eventSize-1]=event;
   // Publish the data source
