@@ -428,7 +428,8 @@ Json::Value exRunControl::json_builder_status()
 	
 	  r["run"]=_builderClient->answer()["answer"]["answer"]["run"];
 	  r["event"]=_builderClient->answer()["answer"]["answer"]["event"];
-	  r["builder"]=_builderClient->answer();
+	  r["builder"]=_builderClient->answer()["answer"]["answer"]["difs"];
+	  r["built"]=_builderClient->answer()["answer"]["answer"]["build"];
 	
     }
   return r;
