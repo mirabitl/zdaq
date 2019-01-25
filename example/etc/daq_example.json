@@ -104,7 +104,7 @@
 		],
 		"NAME": "TRIGGER",
 		"PARAMETER": {
-		    "datasize": 1024,
+		    "datasize": 32765,
 		    "tcpPort": 5666,
 		    "microsleep": 1000000
 		},
