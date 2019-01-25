@@ -87,6 +87,7 @@
 		"PARAMETER": {
 		    "dsnumber": 7,
 		    "directory": "/tmp",
+		    "dummy":1,
 		    "processor": [
 			"binarywriter"
 		    ],
