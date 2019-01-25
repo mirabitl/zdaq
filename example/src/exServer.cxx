@@ -87,6 +87,7 @@ void zdaq::exServer::configure(zdaq::fsmmessage* m)
 
   Json::Value jc=this->parameters();
   int32_t det=jc["detid"].asInt();
+  _detid=det;
   const Json::Value& books = jc["sourceid"];
   Json::Value array_keys;
   for (Json::ValueConstIterator it = books.begin(); it != books.end(); ++it)
@@ -250,13 +251,13 @@ void zdaq::exServer::status(Mongoose::Request &request, Mongoose::JsonResponse &
       js["sourceid"]=it->first&0xFFFF;
       js["event"]=it->second;
       array_keys.append(js);
-      std::cout<<it->first<<" "<<it->second<<std::endl;
-      std::cout<<js<<std::endl;
+      //std::cout<<it->first<<" "<<it->second<<std::endl;
+      //std::cout<<js<<std::endl;
       
     }
   std::cout<<array_keys<<std::endl;
-  response["answer"]["detector"]=_detid;
-  response["answer"]["zmPushers"]=array_keys;
+  response["detector"]=_detid;
+  response["zmPushers"]=array_keys;
 
 }
 
