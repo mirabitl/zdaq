@@ -29,7 +29,7 @@ namespace zdaq {
     std::string _directory;
     uint32_t _run,_event,_totalSize;
     int32_t _fdOut;
-    bool _started;
+    bool _started,_dummy;
   };
 };
 #endif

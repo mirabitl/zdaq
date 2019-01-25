@@ -17,7 +17,7 @@
 #include <iostream>
 #include <sstream>
 using namespace zdaq;
-binarywriter::binarywriter(std::string dire) : _directory(dire),_run(0),_started(false),_fdOut(-1),_totalSize(0),_event(0) {}
+binarywriter::binarywriter(std::string dire) : _directory(dire),_run(0),_started(false),_fdOut(-1),_totalSize(0),_event(0),_dummy(false) {}
 void binarywriter::start(uint32_t run)
 {
   _run=run; 
@@ -41,6 +41,8 @@ void binarywriter::loadParameters(Json::Value params)
 {
   if (params.isMember("directory"))
     _directory=params["directory"].asString();
+   if (params.isMember("dummy"))
+     _dummy=(params["dummy"].asUInt()!=0);
 }
 void binarywriter::stop()
 {
@@ -94,6 +96,7 @@ void binarywriter::processEvent(uint32_t key,std::vector<zdaq::buffer*> vbuf)
     {
       int ier=write(_fdOut,&_event,sizeof(uint32_t));
       ier=write(_fdOut,&theNumberOfDIF,sizeof(uint32_t));
+      if (!_dummy)
       for (std::vector<zdaq::buffer*>::iterator iv=vbuf.begin();iv!=vbuf.end();iv++) 
 	{
 	  //printf("\t %d writing %d bytes \n",(*iv)->detectorId(),(*iv)->size());
