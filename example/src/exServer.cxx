@@ -250,7 +250,11 @@ void zdaq::exServer::status(Mongoose::Request &request, Mongoose::JsonResponse &
       js["sourceid"]=it->first&0xFFFF;
       js["event"]=it->second;
       array_keys.append(js);
+      std::cout<<it->first<<" "<<it->second<<std::endl;
+      std::cout<<js<<std::endl;
+      
     }
+  std::cout<<array_keys<<std::endl;
   response["answer"]["detector"]=_detid;
   response["answer"]["zmPushers"]=array_keys;
 
