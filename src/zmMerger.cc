@@ -21,7 +21,7 @@
 #include <sstream>
 
 using namespace zdaq;
-zmMerger::zmMerger(zmq::context_t* c) : zmPuller(c), _running(false),_nDifs(0)
+zmMerger::zmMerger(zmq::context_t* c) : zmPuller(c), _running(false),_nDifs(0),_purge(false)
 {
   _eventMap.clear();
   _processors.clear();
@@ -220,7 +220,7 @@ void  zmMerger::processData(std::string idd,zmq::message_t *message)
       lastgtc=itm->first;
     }
     }
-
+  // Clear writen event
    for (std::map<uint64_t,std::vector<zdaq::buffer*> >::iterator it=_eventMap.begin();it!=_eventMap.end();)
 	{
 	  
@@ -235,7 +235,23 @@ void  zmMerger::processData(std::string idd,zmq::message_t *message)
 	    it++;
 	}
   
-
+   // Clear old uncompleted event
+   if (_purge)
+     {
+       for (std::map<uint64_t,std::vector<zdaq::buffer*> >::iterator it=_eventMap.begin();it!=_eventMap.end();)
+	 {
+	  
+	   if (it->first+1000<lastgtc)
+	     {
+	       //std::cout<<"Deleting Event "<<it->first<<" Last gtc "<<lastgtc<<std::endl; 
+	       for (std::vector<zdaq::buffer*>::iterator iv=it->second.begin();iv!=it->second.end();iv++) delete (*iv);
+	       it->second.clear();
+	       _eventMap.erase(it++);
+	     }
+	   else
+	     it++;
+	 }
+     }
   // Fill summary
   std::stringstream ss;
   ss<<"DS-"<<detid<<"-"<<sid;

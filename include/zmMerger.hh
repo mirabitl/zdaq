@@ -52,6 +52,7 @@ namespace zdaq {
     void stop();
     void summary();
     Json::Value status();
+    void setPurge(bool t){_purge=t;}
   private:
     bool _useEventId;
     uint32_t _nDifs;
@@ -59,7 +60,7 @@ namespace zdaq {
     std::map<uint64_t,std::vector<zdaq::buffer*> > _eventMap;
 	
     boost::thread_group _gThread;
-    bool _running;
+    bool _running,_purge;
     uint32_t _run,_evt,_build;
     std::vector<uint32_t> _runHeader;
 

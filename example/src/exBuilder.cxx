@@ -20,6 +20,7 @@ zdaq::exBuilder::exBuilder(std::string name) : zdaq::baseApplication(name),_runn
   this->fsm()->addCommand("STATUS",boost::bind(&zdaq::exBuilder::status, this,_1,_2));
   this->fsm()->addCommand("REGISTERDS",boost::bind(&zdaq::exBuilder::registerds, this,_1,_2));
   this->fsm()->addCommand("SETHEADER",boost::bind(&zdaq::exBuilder::c_setheader,this,_1,_2));
+  this->fsm()->addCommand("PURGE",boost::bind(&zdaq::exBuilder::c_purge,this,_1,_2));
 
   //Start server
   char* wp=getenv("WEBPORT");
@@ -139,6 +140,18 @@ void zdaq::exBuilder::registerds(Mongoose::Request &request, Mongoose::JsonRespo
     {
       _merger->setNumberOfDataSource(atoi(request.get("dsnumber","0").c_str()));
       response["answer"]=atoi(request.get("dsnumber","0").c_str());
+
+    }
+  else
+    response["answer"]="NO merger created yet";
+}
+void zdaq::exBuilder::c_purge(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  //std::cout<<"registerds"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData()<<std::endl;
+  if (_merger!=NULL)
+    {
+      _merger->setPurge(atoi(request.get("active","0").c_str())!=0);
+      response["answer"]=atoi(request.get("active","0").c_str());
 
     }
   else
