@@ -14,6 +14,7 @@ public:
 
   void publish(uint64_t bx, uint32_t gtc,uint32_t len);
   char* payload();
+  inline void setCompress(bool t){_compress=t;}
   inline zdaq::buffer* buffer(){return _buffer;}
   inline uint32_t detectorId(){return _detId;}
   inline uint32_t sourceId(){return _sourceId;} 
@@ -23,6 +24,7 @@ private:
   zmq::socket_t *_pusher;
   std::string _header;
   zdaq::buffer* _buffer;
+  bool _compress;
 };
 };
 #endif

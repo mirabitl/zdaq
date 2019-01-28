@@ -10,7 +10,7 @@
 
 #include <unistd.h>
 using namespace zdaq;
-zmPusher::zmPusher( zmq::context_t* c, uint32_t det,uint32_t dif) : _detId(det),_sourceId(dif), _context(c)
+zmPusher::zmPusher( zmq::context_t* c, uint32_t det,uint32_t dif) : _detId(det),_sourceId(dif), _context(c),_compress(true)
   {
     std::stringstream sheader;
     sheader<<"DS-"<<det<<"-"<<dif;
@@ -52,7 +52,8 @@ void zmPusher::publish(uint64_t bx, uint32_t gtc,uint32_t len)
     _buffer->setEventId(gtc);
     _buffer->setPayloadSize(len);
 
-    _buffer->compress();
+    if (_compress)
+      _buffer->compress();
     zmq::message_t message(_buffer->size());
     memcpy(message.data(),_buffer->ptr(),_buffer->size());
     _pusher->send(message);
