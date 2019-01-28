@@ -77,6 +77,10 @@ void zdaq::exServer::configure(zdaq::fsmmessage* m)
     { 
       this->parameters()["mode"]=m->content()["mode"];
     }
+  if (m->content().isMember("compress"))
+    { 
+      this->parameters()["compress"]=m->content()["compress"];
+    }
   // check parameters
   if (!this->parameters().isMember("detid")) {LOG4CXX_ERROR(_logZdaqex,"Missing detid");return;}
   if (!this->parameters().isMember("sourceid")) {LOG4CXX_ERROR(_logZdaqex,"Missing sourceid");return;}
@@ -99,6 +103,10 @@ void zdaq::exServer::configure(zdaq::fsmmessage* m)
       array_keys.append((det<<16)|sid);
       zdaq::zmPusher* ds= new zdaq::zmPusher(_context,det,sid);
       ds->connect(this->parameters()["pushdata"].asString());
+
+      if (this->parameters().isMember("compress"))
+	ds->setCompress(this->parameters()["compress"].asUInt()==1);
+      
       _sources.push_back(ds);
       _stat.insert(std::pair<uint32_t,uint32_t>((det<<16)|sid,0));
 	
