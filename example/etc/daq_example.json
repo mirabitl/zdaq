@@ -11,7 +11,7 @@
 		],
 		"NAME": "EXSERVER",
 		"PARAMETER": {
-		    "compress":0,
+		    "compress":1,
 		    "mode":"TRIGGER",
 		    "paysize":0,
 		    "detid": 100,
@@ -33,7 +33,7 @@
 		],
 		"NAME": "EXSERVER",
 		"PARAMETER": {
-		    "compress":0,
+		    "compress":1,
 		    "mode":"TRIGGER",
 		    "paysize":0,
 		    "detid": 100,
@@ -56,7 +56,7 @@
 		],
 		"NAME": "EXSERVER",
 		"PARAMETER": {
-		    "compress":0,
+		    "compress":1,
 		    "mode":"TRIGGER",
 		    "paysize":0,
 		    "detid": 100,
