@@ -54,8 +54,10 @@ void zmPusher::publish(uint64_t bx, uint32_t gtc,uint32_t len)
 
     if (_compress)
       {
-	std::cout<<"Compressing data"<<gtc<<std::endl;
+	uint32_t bb=_buffer->size();
+
       _buffer->compress();
+      std::cout<<bb<<" Compressing data"<<_buffer->size()<<std::endl;
       }
     zmq::message_t message(_buffer->size());
     memcpy(message.data(),_buffer->ptr(),_buffer->size());
