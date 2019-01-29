@@ -2,6 +2,7 @@
 
 
 #include "zmMerger.hh"
+#include "zdaqLogger.hh"
 #include <time.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -51,12 +52,14 @@ void  zmMerger::registerProcessor(std::string name)
   s<<"lib"<<name<<".so";
   void* library = dlopen(s.str().c_str(), RTLD_NOW);
 
-  printf("%s %x \n",dlerror(),library);
+  //printf("%s %x \n",dlerror(),(unsigned int) library);
+  LOG4CXX_INFO(_logZdaq," Error "<<dlerror()<<" Library open address "<<std::hex<<library<<std::dec);
     // Get the loadFilter function, for loading objects
   zdaq::zmprocessor* (*create)();
   create = (zdaq::zmprocessor* (*)())dlsym(library, "loadProcessor");
-  printf("%s %x \n",dlerror(),create);
-  printf("%s lods to %x \n",s.str().c_str(),create); 
+  LOG4CXX_INFO(_logZdaq," Error "<<dlerror()<<" file "<<s.str()<<" loads to processor address "<<std::hex<<create<<std::dec);
+  //printf("%s %x \n",dlerror(),(unsigned int) create);
+  // printf("%s lods to %x \n",s.str().c_str(),(unsigned int) create); 
   //void (*destroy)(Filter*);
   // destroy = (void (*)(Filter*))dlsym(library, "deleteFilter");
     // Get a new filter object
@@ -73,7 +76,9 @@ void zmMerger::unregisterProcessor(zdaq::zmprocessor* p)
 }
 void zmMerger::registerDataSource(std::string url)
 {
-  std::cout<<"adding input Stream "<<url<<std::endl;
+  
+  LOG4CXX_INFO(_logZdaq,"Adding input Stream "<<url);
+
   this->addInputStream(url,true);
 }
 
@@ -107,8 +112,8 @@ void zmMerger::processEvent(uint32_t idx)
   // for (std::vector<zdaq::buffer*>::iterator iv=it->second.begin();iv!=it->second.end();iv++) delete (*iv);
   // it->second.clear();
   // _eventMap.erase(it);
-  printf("End of processing %d Map size %d \n",_evt,_eventMap.size());
-
+  //printf("End of processing %d Map size %d \n",_evt,_eventMap.size());
+  LOG4CXX_DEBUG(_logZdaq,"End of processing of event "<<_evt<<" remaining map size "<<_eventMap.size());
   // Clearing uncompleted event with GTC< 100 current GTC
 
   
@@ -117,9 +122,9 @@ void zmMerger::processRunHeader()
 {
   for (std::vector<zdaq::zmprocessor*>::iterator itp=_processors.begin();itp!=_processors.end();itp++)
     {
-      std::cout<<"On enevoie"<<std::endl;
+      //std::cout<<"On enevoie"<<std::endl;
       (*itp)->processRunHeader(_runHeader);
-      std::cout<<"Apres enevoie"<<std::endl;
+      //std::cout<<"Apres enevoie"<<std::endl;
     }
 }
 void zmMerger::loadParameters(Json::Value params)
@@ -144,7 +149,7 @@ void zmMerger::start(uint32_t nr)
     }
   _eventMap.clear();
 
-  std::cout<<"run : "<<_run<<" ZMMERGER START for "<<numberOfDataSource()<<" sources"<<std::endl;
+  LOG4CXX_INFO(_logZdaq,"run : "<<_run<<" ZMMERGER START for "<<numberOfDataSource()<<" sources");
   for (std::vector<zdaq::zmprocessor*>::iterator itp=_processors.begin();itp!=_processors.end();itp++)
     {
       (*itp)->start(nr);
@@ -164,16 +169,19 @@ void zmMerger::stop()
 {
   _running=false;
   this->disablePolling();
-  printf("ZmMeger =>Stopping the threads \n");
+  LOG4CXX_INFO(_logZdaq,"Stopping the threads");
+  //  printf("ZmMeger =>Stopping the threads \n");
   _gThread.join_all();
 
   // Do the stop of the the processors
-  printf("ZmMeger =>Stopping the processors \n");
+  LOG4CXX_INFO(_logZdaq,"Stopping theprocessors");
+  //printf("ZmMeger =>Stopping the processors \n");
   for (std::vector<zdaq::zmprocessor*>::iterator itp=_processors.begin();itp!=_processors.end();itp++)
     {
       (*itp)->stop();
     }
-  printf("ZmMeger =>Leaving stop method \n");
+  LOG4CXX_INFO(_logZdaq,"Leaving Stop method");
+
 }
 void  zmMerger::processData(std::string idd,zmq::message_t *message)
 {
@@ -270,7 +278,7 @@ void zmMerger::summary()
 {
   for (auto x:_mReceived)
     {
-      printf("%s => %d \n",x.first.c_str(),x.second);
+      printf("%s => %lu \n",x.first.c_str(),x.second);
     }
 }
 
@@ -280,6 +288,9 @@ Json::Value zmMerger::status()
   jsta["run"]=_run;
   jsta["event"]=_evt;
   jsta["build"]=_build;
+  jsta["running"]=_running;
+  jsta["purge"]=_purge;
+  jsta["size"]=(uint32_t) _eventMap.size();
   for (auto x:_mReceived)
     {
       Json::Value jds;
