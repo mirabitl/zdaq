@@ -34,7 +34,7 @@ zdaq::exServer::exServer(std::string name) : zdaq::baseApplication(name),_runnin
   _context=new zmq::context_t();
   _triggerSubscriber = new  zdaq::zSubscriber(_context); 
   _triggerSubscriber->addHandler(boost::bind(&zdaq::exServer::checkTrigger, this,_1));
-    for (int i=1;i<0x20000;i++) _plrand[i]= std::rand();
+  for (int i=1;i<0x20000;i++) _plrand[i]= i;//std::rand();
 }
 
 void zdaq::exServer::configure(zdaq::fsmmessage* m)
