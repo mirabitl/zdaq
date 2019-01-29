@@ -124,7 +124,9 @@ void zdaq::exServer::fillEvent(uint32_t event,uint64_t bx,zdaq::zmPusher* ds,uin
 {
   if (eventSize==0)
     {
-      eventSize=std::rand()*0x20000/(RAND_MAX);
+      eventSize=int(std::rand()*1.*0x20000/(RAND_MAX))-1;
+      if (eventSize<10) eventSize=10;
+      if (eventSize>0x20000-10) eventSize=0x20000-10;
     }
   // Payload address
   uint32_t* pld=(uint32_t*) ds->payload();
