@@ -310,6 +310,20 @@ void exRunControl::start(zdaq::fsmmessage* m)
 
       LOG4CXX_INFO(_logZdaqex,__PRETTY_FUNCTION__<<" new run "<<_run);
   
+  // Start the builder
+   if (_builderClient)
+    {
+      LOG4CXX_DEBUG(_logZdaqex,__PRETTY_FUNCTION__<<" calling Builder start ");
+      Json::Value jl;
+      jl["run"]=_run;
+      _builderClient->sendTransition("START",jl);
+      ::sleep(1);
+    }
+    
+
+
+
+
    // Start the servers
   boost::thread_group g;
   for (std::vector<fsmwebCaller*>::iterator it=_exServerClients.begin();it!=_exServerClients.end();it++)
@@ -320,15 +334,7 @@ void exRunControl::start(zdaq::fsmmessage* m)
     }
   g.join_all();
   //::sleep(5);
-  // Start the builder
-   if (_builderClient)
-    {
-      LOG4CXX_DEBUG(_logZdaqex,__PRETTY_FUNCTION__<<" calling Builder start ");
-      Json::Value jl;
-      jl["run"]=_run;
-      _builderClient->sendTransition("START",jl);
-    }
- 
+  
   //Start the CCC
    if (_triggerClient)
      {
