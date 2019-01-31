@@ -186,6 +186,8 @@ void zmMerger::stop()
 void  zmMerger::processData(std::string idd,zmq::message_t *message)
 {
   //printf("Processing %s  Map size %d \n",idd.c_str(),_eventMap.size());
+  if (this->registered())
+  _nDifs=this->registered();
   uint32_t detid,sid,gtc;
   uint64_t bx;
   sscanf(idd.c_str(),"DS-%d-%d %d %ld",&detid,&sid,&gtc,&bx);
