@@ -37,7 +37,7 @@
 		    "mode":"TRIGGER",
 		    "paysize":0,
 		    "detid": 100,
-		    "sourceid":[12,13,14,15],
+		    "sourceid":[12,13,14,15,16],
 		    "trigsub":"tcp://lyopc252:5666",
 		    "pushdata":"tcp://lyopc252:5556"
 		},
@@ -88,7 +88,7 @@
 		],
 		"NAME": "BUILDER",
 		"PARAMETER": {
-		    "dsnumber": 13,
+		    "dsnumber": 2,
 		    "directory": "/tmp",
 		    "dummy":1,
 		    "processor": [
