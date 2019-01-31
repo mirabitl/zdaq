@@ -200,6 +200,10 @@ void zdaq::exServer::start(zdaq::fsmmessage* m)
   else
     {
       LOG4CXX_INFO(_logZdaqex,"Working in event handling mode");
+  for (std::vector<zdaq::zmPusher*>::iterator ids=_sources.begin();ids!=_sources.end();ids++)
+	{
+    (*ids)->collectorRegister();
+	}
       _triggerSubscriber->start();
     }
 }
