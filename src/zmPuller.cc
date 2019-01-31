@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include "zhelpers.hpp"
 #include "zmPuller.hh"
+#include "zdaqLogger.hh"
 #include <regex>
 #define ONETHREAD
 using namespace zdaq;
@@ -82,8 +83,9 @@ void  zmPuller::poll()
     }
 
   #endif
-  std::cout<<"start polling on "<<_socks.size()<<" sockets \n";
+  LOG4CXX_INFO(_logZdaq,"start polling on "<<_socks.size()<<" sockets");
   zmq::message_t message;
+  _nregistered=0;
   while (_running)
     {
 
@@ -97,7 +99,17 @@ void  zmPuller::poll()
 		std::string identity = s_recv((*_socks[i]));
 		uint32_t detid,sid,gtc;
 		uint64_t bx;
+    bool registering=(identity.compare(0,2,"ID") == 0);
+    if (registering)
+      {
+		  sscanf(identity.c_str(),"ID-%d-%d %d %ld",&detid,&sid,&gtc,&bx);
+      LOG4CXX_INFO(_logZdaq," New Source registered:"<<detid<<"-"<<sid);
+      _nregistered++;
+      }
+    else 
+     {
 		sscanf(identity.c_str(),"DS-%d-%d %d %ld",&detid,&sid,&gtc,&bx);
+     }
 		//std::cout<<identity<<std::endl;
 		_socks[i]->recv(&message);
 		if (gtc%100==0)
@@ -113,11 +125,12 @@ void  zmPuller::poll()
 		      std::cout<<"Forwarding\n";
 		    //std::cout<<"Forwarding\n";
 		  }
-		this->processData(identity,&message);
+    if (!registering)
+		  this->processData(identity,&message);
 		}
 		catch (zmq::error_t e)
 		  {
-		    std::cout<<e.num()<<std::endl;
+		    LOG4CXX_ERROR(_logZdaq,"Poll error nb:"<<e.num());
 		    continue;
 		  }
 	      }

@@ -291,6 +291,7 @@ Json::Value zmMerger::status()
   jsta["running"]=_running;
   jsta["purge"]=_purge;
   jsta["size"]=(uint32_t) _eventMap.size();
+  jsta["registered"]=this->registered();
   for (auto x:_mReceived)
     {
       Json::Value jds;

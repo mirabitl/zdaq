@@ -12,6 +12,7 @@ public:
   void enablePolling();
   void disablePolling(); 
   void poll();
+  inline uint32_t registered(){return _nregistered;}
   void virtual processData(std::string idd,zmq::message_t *message){;}
 
 private:
@@ -22,6 +23,7 @@ private:
   zmq::context_t* _context;
   zmq::socket_t* _publisher;
   bool _running;
+  uint32_t _nregistered;
 };
 };
 #endif

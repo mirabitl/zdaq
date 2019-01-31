@@ -5,6 +5,7 @@
 #include <sstream>
 #include <iostream>
 #include "zmPusher.hh"
+#include "zdaqLogger.hh"
 
 #include <zhelpers.hpp>
 
@@ -57,7 +58,7 @@ void zmPusher::publish(uint64_t bx, uint32_t gtc,uint32_t len)
 	uint32_t bb=_buffer->size();
 
       _buffer->compress();
-      std::cout<<bb<<" Compressing data"<<_buffer->size()<<std::endl;
+      LOG4CXX_INFO(_logZdaq," Compressing data"<<_buffer->size());
       }
     zmq::message_t message(_buffer->size());
     memcpy(message.data(),_buffer->ptr(),_buffer->size());
@@ -65,7 +66,38 @@ void zmPusher::publish(uint64_t bx, uint32_t gtc,uint32_t len)
     }
     catch (zmq::error_t e)
       {
-	std::cout<<e.num()<<" error\n";
+	    LOG4CXX_ERROR(_logZdaq,e.num()<<" error number");
+	return;
+      }
+  }
+void zmPusher::collectorRegister()
+  {
+    std::stringstream ss;
+    //printf("PUSHER detid %x \n",_buffer->detectorId());
+    ss<<"ID-"<<_detId<<"-"<<_sourceId;
+    try {
+      //s_sendmore((*_pusher),ss.str());
+      //std::cout<<" bx"<<(uint64_t) bx<<" "<<ss.str()<<"\n";
+      zmq::message_t message1(ss.str().size());
+      memcpy (message1.data(), ss.str().data(), ss.str().size());
+
+      bool rc = _pusher->send (message1, ZMQ_SNDMORE);
+
+
+      
+    _buffer->setBxId(0);
+    _buffer->setEventId(0);
+    _buffer->setPayloadSize(64);
+
+  
+    zmq::message_t message(_buffer->size());
+    memcpy(message.data(),_buffer->ptr(),_buffer->size());
+    _pusher->send(message);
+    }
+    catch (zmq::error_t e)
+      {
+        	    LOG4CXX_ERROR(_logZdaq,e.num()<<" error number");
+
 	return;
       }
   }

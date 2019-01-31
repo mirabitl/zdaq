@@ -192,6 +192,7 @@ void zdaq::exServer::start(zdaq::fsmmessage* m)
     {
       for (std::vector<zdaq::zmPusher*>::iterator ids=_sources.begin();ids!=_sources.end();ids++)
 	{
+    (*ids)->collectorRegister();
 	  _gthr.create_thread(boost::bind(&zdaq::exServer::readdata, this,(*ids)));
 	  ::usleep(500000);
 	}

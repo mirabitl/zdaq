@@ -13,6 +13,7 @@ public:
   void bind(std::string dest);
 
   void publish(uint64_t bx, uint32_t gtc,uint32_t len);
+  void collectorRegister();
   char* payload();
   inline void setCompress(bool t){_compress=t;}
   inline bool isCompress() {return _compress;}
