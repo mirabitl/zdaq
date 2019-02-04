@@ -41,7 +41,7 @@ void zdaq::exServer::configure(zdaq::fsmmessage* m)
 {
   
   LOG4CXX_INFO(_logZdaqex," Receiving: "<<m->command()<<" value:"<<m->value());
-
+  this->autoDiscover();
   // Delet existing zmPushers
   for (std::vector<zdaq::zmPusher*>::iterator it=_sources.begin();it!=_sources.end();it++)
     delete (*it);

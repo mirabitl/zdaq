@@ -180,7 +180,6 @@ void  baseApplication::create(zdaq::fsmmessage* m)
     rep["config"]=_jConfig;
     m->setAnswer(rep);
     this->userCreate(m);
-    this->autoDiscover();
     return;
 
 }
