@@ -13,7 +13,7 @@ zdaq::exServer::exServer(std::string name) : zdaq::baseApplication(name),_runnin
   _fsm->addState("INITIALISED");
   _fsm->addState("CONFIGURED");
   _fsm->addState("RUNNING");
-  _fsm->addTransition("INITIALISE","CREATED","INITIALISED",boost::bind(&zdaq::exServer::configure, this,_1));
+  _fsm->addTransition("INITIALISE","CREATED","INITIALISED",boost::bind(&zdaq::exServer::initialise, this,_1));
   _fsm->addTransition("CONFIGURE","INITIALISED","CONFIGURED",boost::bind(&zdaq::exServer::configure, this,_1));
   _fsm->addTransition("CONFIGURE","CONFIGURED","CONFIGURED",boost::bind(&zdaq::exServer::configure, this,_1));
   _fsm->addTransition("START","CONFIGURED","RUNNING",boost::bind(&zdaq::exServer::start, this,_1));
