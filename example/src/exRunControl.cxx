@@ -257,7 +257,12 @@ void exRunControl::initialise(zdaq::fsmmessage* m)
   // Configure CCC
  
   LOG4CXX_DEBUG(_logZdaqex,__PRETTY_FUNCTION__<<"Nothing to do at initialise .... ");
-
+for (std::vector<fsmwebCaller*>::iterator it=_exServerClients.begin();it!=_exServerClients.end();it++)
+    {
+      Json::Value jc;
+  jc["difid"]=0;
+  (*it)->sendTransition("INITIALISE",jc);
+    }
   // Fill status
   Json::Value jsta="NOTHING";
   m->setAnswer(jsta);

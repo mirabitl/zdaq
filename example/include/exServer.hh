@@ -11,6 +11,7 @@ namespace zdaq {
   class exServer :public zdaq::baseApplication {
   public:
     exServer(std::string name);
+    void initialise(zdaq::fsmmessage* m);
     void configure(zdaq::fsmmessage* m);
     void start(zdaq::fsmmessage* m);
     void stop(zdaq::fsmmessage* m);

@@ -10,14 +10,16 @@ zdaq::exServer::exServer(std::string name) : zdaq::baseApplication(name),_runnin
   
   // Register state
   _fsm->addState("CREATED");
+  _fsm->addState("INITIALISED");
   _fsm->addState("CONFIGURED");
   _fsm->addState("RUNNING");
-  _fsm->addTransition("CONFIGURE","CREATED","CONFIGURED",boost::bind(&zdaq::exServer::configure, this,_1));
+  _fsm->addTransition("INITIALISE","CREATED","INITIALISED",boost::bind(&zdaq::exServer::configure, this,_1));
+  _fsm->addTransition("CONFIGURE","INITIALISED","CONFIGURED",boost::bind(&zdaq::exServer::configure, this,_1));
   _fsm->addTransition("CONFIGURE","CONFIGURED","CONFIGURED",boost::bind(&zdaq::exServer::configure, this,_1));
   _fsm->addTransition("START","CONFIGURED","RUNNING",boost::bind(&zdaq::exServer::start, this,_1));
   _fsm->addTransition("STOP","RUNNING","CONFIGURED",boost::bind(&zdaq::exServer::stop, this,_1));
-  _fsm->addTransition("HALT","RUNNING","CREATED",boost::bind(&zdaq::exServer::halt, this,_1));
-  _fsm->addTransition("HALT","CONFIGURED","CREATED",boost::bind(&zdaq::exServer::halt, this,_1));
+  _fsm->addTransition("HALT","RUNNING","INITIALISED",boost::bind(&zdaq::exServer::halt, this,_1));
+  _fsm->addTransition("HALT","CONFIGURED","INITIALISED",boost::bind(&zdaq::exServer::halt, this,_1));
   
   _fsm->addCommand("DOWNLOAD",boost::bind(&zdaq::exServer::download, this,_1,_2));
   _fsm->addCommand("STATUS",boost::bind(&zdaq::exServer::status, this,_1,_2));
@@ -36,12 +38,16 @@ zdaq::exServer::exServer(std::string name) : zdaq::baseApplication(name),_runnin
   _triggerSubscriber->addHandler(boost::bind(&zdaq::exServer::checkTrigger, this,_1));
   for (int i=1;i<0x20000;i++) _plrand[i]= std::rand();
 }
-
-void zdaq::exServer::configure(zdaq::fsmmessage* m)
+void zdaq::exServer::initialise(zdaq::fsmmessage* m)
 {
   
   LOG4CXX_INFO(_logZdaqex," Receiving: "<<m->command()<<" value:"<<m->value());
   this->autoDiscover();
+}
+void zdaq::exServer::configure(zdaq::fsmmessage* m)
+{
+  
+  LOG4CXX_INFO(_logZdaqex," Receiving: "<<m->command()<<" value:"<<m->value());
   // Delet existing zmPushers
   for (std::vector<zdaq::zmPusher*>::iterator it=_sources.begin();it!=_sources.end();it++)
     delete (*it);
