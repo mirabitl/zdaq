@@ -262,8 +262,9 @@ void baseApplication::autoDiscover()
           if (port==0) continue;
           if (port==this->port() && host.compare(this->host())==0) continue;
           LOG4CXX_INFO(_logZdaq," Name "<<p_name<<" "<<host<<":"<<port);
-          continue;
           fsmwebCaller* b= new fsmwebCaller(host,port);
+          continue;
+
           std::map<std::string,std::vector<fsmwebCaller*> >::iterator it_app=_apps.find(p_name);
 
           if (it_app!=_apps.end())

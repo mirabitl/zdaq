@@ -5,6 +5,7 @@
 #include <json/json.h>
 #include <stdint.h>
 #include "fsmwebCaller.hh"
+#include "zdaqLogger.hh"
 using namespace std;
 //char* CurlQuery(char* AddURL,char* Chaine);
 char rfc3986[256] = {0};
@@ -72,6 +73,7 @@ fsmwebCaller::fsmwebCaller(std::string host,uint32_t port)
   std::stringstream s;
   s<<"http://"<<host<<":"<<port<<"/";
   // Check the prefix
+  LOG4CXX_INFO(_logZdaq,"Making a call "<<s.str());
   std::string rc=fsmwebCaller::curlQuery((char*) s.str().c_str());
   
   Json::Reader reader;
