@@ -42,7 +42,7 @@ void zdaq::exServer::initialise(zdaq::fsmmessage* m)
 {
   
   LOG4CXX_INFO(_logZdaqex," Receiving: "<<m->command()<<" value:"<<m->value());
-  //this->autoDiscover();
+  this->autoDiscover();
 }
 void zdaq::exServer::configure(zdaq::fsmmessage* m)
 {
