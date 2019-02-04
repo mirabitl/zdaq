@@ -261,6 +261,7 @@ void baseApplication::autoDiscover()
           }
             }
           if (port==0) continue;
+          if (port==this->port() && host.compare(this->host())==0) continue;
           fsmwebCaller* b= new fsmwebCaller(host,port);
           std::map<std::string,std::vector<fsmwebCaller*> >::iterator it_app=_apps.find(p_name);
 
