@@ -180,6 +180,7 @@ void  baseApplication::create(zdaq::fsmmessage* m)
     rep["config"]=_jConfig;
     m->setAnswer(rep);
     this->userCreate(m);
+    this->autoDiscover();
     return;
 
 }
@@ -229,3 +230,58 @@ Json::Value baseApplication::configuration() { return _jConfig;}
 Json::Value& baseApplication::parameters() {return _jParam;}
 Json::Value& baseApplication::infos() {return _jInfo;}
 fsmweb* baseApplication::fsm(){return _fsm;}
+
+
+void baseApplication::autoDiscover()
+{
+  _apps.clear();
+  Json::Value cjs=this->configuration()["HOSTS"];
+  //  std::cout<<cjs<<std::endl;
+  std::vector<std::string> lhosts=this->configuration()["HOSTS"].getMemberNames();
+  // Loop on hosts
+  for (auto host:lhosts)
+    {
+      const Json::Value cjsources=this->configuration()["HOSTS"][host];
+      //std::cout<<cjsources<<std::endl;
+      for (Json::ValueConstIterator it = cjsources.begin(); it != cjsources.end(); ++it)
+        {
+          const Json::Value& process = *it;
+          std::string p_name=process["NAME"].asString();
+          uint32_t port=0;
+          const Json::Value& cenv=process["ENV"];
+          for (Json::ValueConstIterator iev = cenv.begin(); iev != cenv.end(); ++iev)
+            {
+              std::string envp=(*iev).asString();
+              //      std::cout<<"Env found "<<envp.substr(0,7)<<std::endl;
+              //std::cout<<"Env found "<<envp.substr(8,envp.length()-7)<<std::endl;
+              if (envp.substr(0,7).compare("WEBPORT")==0)
+          {
+            port=atol(envp.substr(8,envp.length()-7).c_str());
+            break;
+          }
+            }
+          if (port==0) continue;
+          fsmwebCaller* b= new fsmwebCaller(host,port);
+          std::map<std::string,std::vector<fsmwebCaller*> >::iterator it_app=_apps.find(p_name);
+
+          if (it_app!=_apps.end())
+            it_app->second.push_back(b);
+          else
+            {
+            std::vector<fsmwebCaller*> v;
+            v.clear();
+            v.push_back(b);
+                
+            std::pair<std::string,std::vector<fsmwebCaller*> > p(p_name,v);
+            _apps.insert(p);
+            it_app=_apps.find(p_name);
+            }
+
+
+	      }
+
+    }
+  
+
+}
+

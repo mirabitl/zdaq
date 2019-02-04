@@ -1,6 +1,8 @@
 #ifndef _baseZdaqApplication_hh
 #define _baseZdaqApplication_hh
 #include "fsmweb.hh"
+#include "fsmwebCaller.hh"
+#include <map>
 #include <string>
 #include <vector>
 #include <json/json.h>
@@ -24,6 +26,7 @@ public:
   std::string login(){return _login;}
   std::string host() {return _hostname;}
   std::string name() {return _processName;}
+  void autoDiscover();
 protected:
   zdaq::fsmweb* _fsm;
   std::string _hostname;
@@ -33,6 +36,7 @@ protected:
   Json::Value _jParam;
   Json::Value _jInfo;
   uint32_t _instance,_port;
+  std::map<std::string,std::vector<fsmwebCaller*> > _apps;
   
 };
 };
