@@ -231,7 +231,7 @@ Json::Value& baseApplication::infos() {return _jInfo;}
 fsmweb* baseApplication::fsm(){return _fsm;}
 
 
-void baseApplication::autoDiscover()
+void baseApplication::findApps(std::string aname)
 {
   _apps.clear();
   Json::Value cjs=this->configuration()["HOSTS"];
@@ -246,6 +246,8 @@ void baseApplication::autoDiscover()
         {
           const Json::Value& process = *it;
           std::string p_name=process["NAME"].asString();
+          if (p_name.compare(aname)!=0) continue;
+
           uint32_t port=0;
           const Json::Value& cenv=process["ENV"];
           for (Json::ValueConstIterator iev = cenv.begin(); iev != cenv.end(); ++iev)
@@ -263,24 +265,8 @@ void baseApplication::autoDiscover()
           if (port==this->port() && host.compare(this->host())==0) continue;
           LOG4CXX_INFO(_logZdaq," Name "<<p_name<<" "<<host<<":"<<port);
           fsmwebCaller* b= new fsmwebCaller(host,port);
-          continue;
-
-          std::map<std::string,std::vector<fsmwebCaller*> >::iterator it_app=_apps.find(p_name);
-
-          if (it_app!=_apps.end())
-            it_app->second.push_back(b);
-          else
-            {
-            std::vector<fsmwebCaller*> v;
-            v.clear();
-            v.push_back(b);
-                
-            std::pair<std::string,std::vector<fsmwebCaller*> > p(p_name,v);
-            _apps.insert(p);
-            it_app=_apps.find(p_name);
-            }
-
-
+          _apps.push_back(b);
+          
 	      }
 
     }

@@ -26,7 +26,8 @@ public:
   std::string login(){return _login;}
   std::string host() {return _hostname;}
   std::string name() {return _processName;}
-  void autoDiscover();
+  void findApps(std::string aname);
+  std::vector<fsmwebCaller*>& callers() {return _apps;}
 protected:
   zdaq::fsmweb* _fsm;
   std::string _hostname;
@@ -36,7 +37,7 @@ protected:
   Json::Value _jParam;
   Json::Value _jInfo;
   uint32_t _instance,_port;
-  std::map<std::string,std::vector<fsmwebCaller*> > _apps;
+  std::vector<fsmwebCaller*> _apps;
   
 };
 };
