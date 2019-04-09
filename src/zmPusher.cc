@@ -58,7 +58,7 @@ void zmPusher::publish(uint64_t bx, uint32_t gtc,uint32_t len)
 	uint32_t bb=_buffer->size();
 
       _buffer->compress();
-      LOG4CXX_INFO(_logZdaq," Compressing data"<<_buffer->size());
+      LOG4CXX_DEBUG(_logZdaq," Compressing data"<<_buffer->size());
       }
     zmq::message_t message(_buffer->size());
     memcpy(message.data(),_buffer->ptr(),_buffer->size());
