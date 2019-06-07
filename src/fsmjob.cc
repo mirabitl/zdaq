@@ -518,6 +518,14 @@ Json::Value fsmjob::jsonStatus()
       pinf["NAME"] = iter->second->m_processInfo["NAME"];
       pinf["STATUS"] = processStatus(iter->first);
 
+      for (uint32_t ia=0;ia<iter->second->m_processInfo["ENV"].size();ia++)
+	{
+	  std::string svar=iter->second->m_processInfo["ENV"][ia].asString();
+	  if (svar.substr(0,7).compare("WEBPORT")==0)
+	  {
+	    pinf["PORT"]=svar.substr(8,svar.length());
+	  }
+	}
       array.append(pinf);
     }
   return array;
