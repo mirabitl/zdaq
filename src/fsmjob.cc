@@ -155,6 +155,7 @@ processData::processData(const std::string &jsonString) : m_string(jsonString)
 }
 fsmjob::fsmjob(std::string name,uint32_t port)  : m_port(port),_login("")
 {
+  
   _fsm=new fsmweb(name);
 
 
@@ -178,6 +179,7 @@ fsmjob::fsmjob(std::string name,uint32_t port)  : m_port(port),_login("")
   _fsm->addTransition("DESTROY","INITIALISED","CREATED",boost::bind(&fsmjob::destroy, this,_1));
 
   _fsm->addCommand("STATUS",boost::bind(&fsmjob::status, this,_1,_2));
+  _fsm->addCommand("APPCREATE",boost::bind(&fsmjob::appcreate, this,_1,_2));
   _fsm->addCommand("JOBLOG",boost::bind(&fsmjob::joblog, this,_1,_2));
   _fsm->addCommand("KILLJOB",boost::bind(&fsmjob::killjob, this,_1,_2));
   _fsm->addCommand("RESTARTJOB",boost::bind(&fsmjob::restartjob, this,_1,_2));
@@ -208,7 +210,9 @@ fsmjob::fsmjob(std::string name,uint32_t port)  : m_port(port),_login("")
     myfile.close();
   }
 
-  else cout << "Unable to open /etc/ljc.conf file"; 
+  else cout << "Unable to open /etc/ljc.conf file";
+
+  m_configContent=Json::Value::null;
   //Start server
   char* wl=getenv("WEBLOGIN");
   if (wl!=NULL) _login=std::string(wl);
@@ -256,6 +260,9 @@ void fsmjob::initialise(zdaq::fsmmessage* m)
   // Add a data source
   // Parse the json message
   // {"command": "CONFIGURE", "content": {"detid": 100, "sourceid": [23, 24, 26]}}
+    // Store configuration
+  m_configContent=m->content();
+  //
   Json::Value jc=m->content();
    if (jc.isMember("login"))
     {
@@ -504,6 +511,62 @@ void fsmjob::start(zdaq::fsmmessage* m)
   
 }
 
+
+
+
+Json::Value fsmjob::jsonInfo()
+{
+  
+  Json::Value array;
+
+  for (PidToProcessMap::iterator iter = m_processMap.begin(), endIter = m_processMap.end() ;
+       endIter != iter ; ++iter)
+    {
+      Json::Value pinf;
+      
+      pinf["HOST"] = m_hostname;
+      pinf["PID"] = iter->first;
+      pinf["NAME"] = iter->second->m_processInfo["NAME"];
+      pinf["STATUS"] = processStatus(iter->first);
+
+      for (uint32_t ia=0;ia<iter->second->m_processInfo["ENV"].size();ia++)
+	{
+	  std::string svar=iter->second->m_processInfo["ENV"][ia].asString();
+	  if (svar.substr(0,7).compare("WEBPORT")==0)
+	  {
+	    pinf["PORT"]=svar.substr(8,svar.length());
+	    uint32_t port=atol(pinf["PORT"].asString().c_str());
+	    std::stringstream sq;
+	    sq<<"http://"<<m_hostname<<":"<<port;
+	    std::string jsinfo=fsmwebCaller::curlQuery(sq.str());
+	    Json::Reader reader;
+	    Json::Value jcc;
+	    bool parsingSuccessful = reader.parse(jsinfo,jcc);
+	    if (jcc.isMember("STATE") && !m_configContent.empty())
+	      {
+		if (jcc["STATE"].asString().compare("VOID")==0)
+		  if (jcc.isMember("ALLOWED"))
+		    {
+		      fsmwebCaller b(m_hostname,port);
+
+		      b.sendTransition("CREATE",m_configContent);
+		      pinf["STATE"]=b.queryState();
+		    }
+	      }
+
+
+	    
+	  }
+	}
+      array.append(pinf);
+    }
+  return array;
+}
+
+
+
+
+
 Json::Value fsmjob::jsonStatus()
 {
   Json::Value array;
@@ -561,6 +624,14 @@ void fsmjob::status(Mongoose::Request &request, Mongoose::JsonResponse &response
   std::cout<<"RESPONSE =>"<<response;
   response["STATUS"]="DONE";
 }
+
+void fsmjob::appcreate(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  response["APPS"]=this->jsonInfo();
+}
+
+
+
 void fsmjob::killjob(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
   std::string name=request.get("processname","NONE");
