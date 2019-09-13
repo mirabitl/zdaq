@@ -1,0 +1,14 @@
+
+
+[Unit]
+Description=ZDAQ job control
+After=tlp-init.service
+
+[Service]
+Type=forking
+RemainAfterExit=yes
+ExecStart=/bin/sh -c '/opt/dhcal/bin/ljcd.sh&'
+
+[Install]
+WantedBy=multi-user.target
+
