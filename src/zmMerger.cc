@@ -261,6 +261,23 @@ void  zmMerger::processData(std::string idd,zmq::message_t *message)
 	   else
 	     it++;
 	 }
+       // Force purge if size>1000
+       if (_eventMap.size()>1000)
+	 {
+	   for (std::map<uint64_t,std::vector<zdaq::buffer*> >::iterator it=_eventMap.begin();it!=_eventMap.end();)
+	     {
+	  
+	       if (it->first>1)
+		 {
+		   //std::cout<<"Deleting Event "<<it->first<<" Last gtc "<<lastgtc<<std::endl; 
+		   for (std::vector<zdaq::buffer*>::iterator iv=it->second.begin();iv!=it->second.end();iv++) delete (*iv);
+		   it->second.clear();
+		   _eventMap.erase(it++);
+		 }
+	       else
+		 it++;
+	     }
+	 }
      }
   // Fill summary
   std::stringstream ss;
