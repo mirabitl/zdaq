@@ -11,6 +11,8 @@ PATH="/sbin:/bin:/usr/sbin:/usr/bin" #Ne pas toucher
 
 
 export LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/opt/zdaq/lib:$LD_LIBRARY_PATH
+export PATH=/opt/zdaq/scripts:$PATH
+export PYTHONPATH=/opt/zdaq/scripts:$PYTHONPATH
 
 . /etc/difdim.cfg
 
