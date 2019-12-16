@@ -56,7 +56,7 @@ class MongoJob:
             #var=raw_input()
             slc=x["content"]
             os.system("mkdir -p /dev/shm/mgjob")
-            fname="/dev/shm/mgroc/%s_%s.json" % (cname,version)
+            fname="/dev/shm/mgjob/%s_%s.json" % (cname,version)
             f=open(fname,"w+")
             f.write(json.dumps(slc, indent=2, sort_keys=True))
             f.close()
@@ -65,14 +65,13 @@ class MongoJob:
      
 def instance():
     # create the default access
-    self.login=os.getenv("MGDBLOGIN","NONE")
-    userinfo=self.login.split("@")[0]
-    hostinfo=self.login.split("@")[1]
-    dbname=self.login.split("@")[2]
+    login=os.getenv("MGDBLOGIN","NONE")
+    userinfo=login.split("@")[0]
+    hostinfo=login.split("@")[1]
+    dbname=login.split("@")[2]
     user=userinfo.split("/")[0]
     pwd=userinfo.split("/")[1]
     host=hostinfo.split(":")[0]
-    port=hostinfo.split(":")[1]
-    _wdd=MongoRoc(host,port,dbname,user,pwd)
-    f.close()
+    port=int(hostinfo.split(":")[1])
+    _wdd=MongoJob(host,port,dbname,user,pwd)
     return _wdd
