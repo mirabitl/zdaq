@@ -1,0 +1,87 @@
+#!/usr/bin/env python
+import os
+import socks
+import socket
+import httplib
+import urllib
+import urllib2
+from urllib2 import URLError, HTTPError
+import json
+from copy import deepcopy
+import base64
+import time
+import argparse
+import requests
+import MongoJob as mg
+
+
+
+# create the default access
+
+_wdd=mg.instance()
+#print "COUCOU"
+parser = argparse.ArgumentParser()
+
+# configure all the actions
+grp_action = parser.add_mutually_exclusive_group()
+grp_action.add_argument('--upload-config',action='store_true',help=' Upload new config with --name=NAME --file=FILE and optional --comment=xxx and --version=num')
+grp_action.add_argument('--configurations', action='store_true',help='List all the available configurations')
+grp_action.add_argument('--download', action='store_true',
+                        help='download the configuration specified in --name=config name --version=version')
+# Arguments
+parser.add_argument('--version', action='store',type=int,default=1,dest='version',help='DB configuration version' )
+parser.add_argument('--name', action='store', type=str,
+                    default=None, dest='name', help='Configuration name')
+parser.add_argument('--comment', action='store', type=str,
+                    default=None, dest='comment', help='Comment')
+parser.add_argument('--file', action='store', type=str,
+                    default=None, dest='file', help='Configuration file')
+
+
+results = parser.parse_args()
+
+
+# Analyse results
+# analyse the command
+lcgi = {}
+r_cmd = None
+
+if (results.upload_config):
+    r_cmd = 'upload_config'
+    version=1
+    comment="No comment given"
+    if (results.name == None):
+        print 'Please specify the name --name=name'
+        exit(0)
+    if (results.file == None):
+        print 'Please specify the file --file=ver'
+        exit(0)
+    if (results.version != None):
+       version=results.version
+       #print version
+    if (results.comment != None):
+       comment=results.comment
+       #print comment
+    _wdd.uploadConfig(results.name,results.file,comment,version)
+    exit(0)
+
+
+
+
+if (results.download):
+    r_cmd = 'download'
+    
+    if (results.name != None):
+        if (results.version == None):
+            print 'Please specify the version --version=ver'
+            exit(0)
+        _wdd.downloadConfig(results.name,results.version)
+        exit(0)
+    else:
+        print " Specify  --name for configuration "
+        exit(0)
+
+if (results.configurations):
+    r_cmd = 'configurations'
+    _wdd.configurations()
+    exit(0)

@@ -320,10 +320,54 @@ void fsmjob::initialise(zdaq::fsmmessage* m)
 	    std::cout << styledWriter.write(m_jconf) << std::endl;
 	  }
       }
-  
-  // Overwrite msg
-    //Prepare complex answer
-  m->setAnswer(m_jconf);
+      else
+      {
+        if (jc.isMember("mongo"))
+        {
+          std::string identity = jc["mongo"].asString();
+          std::cout << identity << std::endl;
+          std::size_t current;
+          current = identity.find(":");
+          std::string conf_name = identity.substr(0, current);
+          std::string conf_version = identity.substr(current + 1, identity.size());
+          std::cout << "Hostname " << m_hostname << " identity " << identity << " conf " << conf_name << " version " << conf_version << std::endl;
+          std::stringstream scmd;
+          scmd << "/bin/bash -c 'mgjob --download --name=" << conf_name << " --version=" << conf_version << "'";
+          system(scmd.str().c_str());
+          std::stringstream sname;
+          sname << "/dev/shm/mgjob/" << conf_name << "_" << conf_version << ".json";
+
+          fprintf(stderr, "Parsing the file %s\n", sname.str().c_str());
+          Json::Reader reader;
+          Json::Value jcc;
+          std::ifstream ifs(sname.str().c_str(), std::ifstream::in);
+          //      Json::Value _jall;
+          fprintf(stderr, "Before Parsing the file %s\n", sname.str().c_str());
+          bool parsingSuccessful = reader.parse(ifs, jcc, false);
+          /*
+	std::string jsconf=wget(url);
+	std::cout<<jsconf<<std::endl;
+	Json::Reader reader;
+	bool parsingSuccessful = reader.parse(jsconf, m_jfile);
+    */
+          if (jcc.isMember("content"))
+            m_jfile = jcc["content"];
+          else
+            m_jfile = jcc;
+
+          if (parsingSuccessful)
+          {
+            //m_jconf=m_jfile["HOSTS"][m_hostname];
+            this->buildJobConfig();
+            Json::StyledWriter styledWriter;
+            std::cout << styledWriter.write(m_jconf) << std::endl;
+          }
+        }
+      }
+
+      // Overwrite msg
+      //Prepare complex answer
+      m->setAnswer(m_jconf);
  
 }
 void fsmjob::startProcess(zdaq::processData* pProcessData)
