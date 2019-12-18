@@ -11,12 +11,13 @@ from copy import deepcopy
 import base64
 import time
 import argparse
-import requests
+#import requests //tres long
 import MongoJob as mg
 
 
 
 # create the default access
+#print "COUCOU"
 
 _wdd=mg.instance()
 #print "COUCOU"
@@ -75,7 +76,7 @@ if (results.download):
         if (results.version == None):
             print 'Please specify the version --version=ver'
             exit(0)
-        _wdd.downloadConfig(results.name,results.version)
+        _wdd.downloadConfig(results.name,results.version,True)
         exit(0)
     else:
         print " Specify  --name for configuration "

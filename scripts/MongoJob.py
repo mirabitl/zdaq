@@ -49,7 +49,12 @@ class MongoJob:
             if ("comment" in x):
                 print time.ctime(x["time"]),x["version"],x["name"],x["comment"]
 
-    def downloadConfig(self,cname,version):
+    def downloadConfig(self,cname,version,toFileOnly=False):
+        os.system("mkdir -p /dev/shm/mgjob")
+        fname="/dev/shm/mgjob/%s_%s.json" % (cname,version)
+        if os.path.isfile(fname) and toFileOnly:
+            print '%s already download, Exiting' % fname
+            return
         res=self.db.configurations.find({'name':cname,'version':version})
         for x in res:
             print x["name"],x["version"],x["comment"]
@@ -73,5 +78,7 @@ def instance():
     pwd=userinfo.split("/")[1]
     host=hostinfo.split(":")[0]
     port=int(hostinfo.split(":")[1])
+    #print host,port,dbname,user,pwd
     _wdd=MongoJob(host,port,dbname,user,pwd)
+    #print "apres"
     return _wdd
