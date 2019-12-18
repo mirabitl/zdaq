@@ -53,7 +53,7 @@ class MongoJob:
         os.system("mkdir -p /dev/shm/mgjob")
         fname="/dev/shm/mgjob/%s_%s.json" % (cname,version)
         if os.path.isfile(fname) and toFileOnly:
-            print '%s already download, Exiting' % fname
+            #print '%s already download, Exiting' % fname
             return
         res=self.db.configurations.find({'name':cname,'version':version})
         for x in res:
