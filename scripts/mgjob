@@ -27,14 +27,23 @@ parser = argparse.ArgumentParser()
 grp_action = parser.add_mutually_exclusive_group()
 grp_action.add_argument('--upload-config',action='store_true',help=' Upload new config with --name=NAME --file=FILE and optional --comment=xxx and --version=num')
 grp_action.add_argument('--configurations', action='store_true',help='List all the available configurations')
+
 grp_action.add_argument('--download', action='store_true',
                         help='download the configuration specified in --name=config name --version=version')
+
+
+grp_action.add_argument('--runs', action='store_true',help='List all the taken runs')
+grp_action.add_argument('--new-run', action='store_true',help='Find last run of a given setup (--location setup) and fill the lastrun.sjon with the next runid')
+
+
 # Arguments
 parser.add_argument('--version', action='store',type=int,default=1,dest='version',help='DB configuration version' )
 parser.add_argument('--name', action='store', type=str,
                     default=None, dest='name', help='Configuration name')
 parser.add_argument('--comment', action='store', type=str,
                     default=None, dest='comment', help='Comment')
+parser.add_argument('--location', action='store', type=str,
+                    default=None, dest='location', help='Setup name')
 parser.add_argument('--file', action='store', type=str,
                     default=None, dest='file', help='Configuration file')
 
@@ -85,4 +94,19 @@ if (results.download):
 if (results.configurations):
     r_cmd = 'configurations'
     _wdd.configurations()
+    exit(0)
+
+if (results.runs):
+    _wdd.runs()
+    exit(0)
+
+if (results.new_run):
+    comment="No comment given"
+    if (results.location == None):
+        print 'Please specify the setup --location=name'
+        exit(0)
+    if (results.comment != None):
+       comment=results.comment
+       #print comment
+    _wdd.getRun(results.location,comment)
     exit(0)

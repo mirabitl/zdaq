@@ -48,6 +48,11 @@ class MongoJob:
         for x in res:
             if ("comment" in x):
                 print time.ctime(x["time"]),x["version"],x["name"],x["comment"]
+    def runs(self):
+        res=self.db.runs.find({})
+        for x in res:
+            if ("comment" in x):
+                print time.ctime(x["time"]),x["location"],x["run"],x["comment"]
 
     def downloadConfig(self,cname,version,toFileOnly=False):
         os.system("mkdir -p /dev/shm/mgjob")
@@ -66,6 +71,30 @@ class MongoJob:
             f.write(json.dumps(slc, indent=2, sort_keys=True))
             f.close()
             return slc
+        
+    def getRun(self,location,comment="Not set"):
+        res=self.db.runs.find({'location':location})
+        runid={}
+        for x in res:
+            #print x["location"],x["run"],x["comment"]
+            #var=raw_input()
+            runid=x
+        if ("location" in runid):
+            runid["run"]=runid["run"]+1
+            del runid["_id"]
+        else:
+            runid["run"]=1000
+            runid["location"]=location
+        runid["time"]=time.time()
+        runid["comment"]=comment
+        os.system("mkdir -p /dev/shm/mgjob")
+        fname="/dev/shm/mgjob/lastrun.json"
+        f=open(fname,"w+")
+        f.write(json.dumps(runid, indent=2, sort_keys=True))
+        f.close()
+        resconf=self.db.runs.insert_one(runid)
+        print resconf
+        return runid
  
      
 def instance():
