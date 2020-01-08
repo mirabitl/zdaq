@@ -10,6 +10,12 @@ import time
 
 
 def IP2Int(ip):
+    """
+    convert IP adress string to int
+
+    :param IP: the IP address
+    :return: the encoded integer 
+    """
     o = map(int, ip.split('.'))
     res = (16777216 * o[3]) + (65536 * o[2]) + (256 * o[1]) + o[0]
     return res
@@ -22,18 +28,38 @@ class MongoJob:
 
     def __init__(self, host,port,dbname,username,pwd):
         """
-        connect Mongodb database named dbname
+        connect Mongodb database 
+
+        :param host: Hostanme of the PC running the mongo DB
+
+        :param port: Port to access the base
+
+        :param dbname: Data base name
+
+        :param username: Remote access user
+
+        :param pwd: Remote access password
+
         """
+      
         self.connection=MongoClient(host,port)
         self.db=self.connection[dbname]
         self.db.authenticate(username,pwd)
 
     def reset(self):
         """
-        Reset connection to download another state
+        Reset connection to download another configuration
         """
         self.bson_id=[] 
     def uploadConfig(self,name,fname,comment,version=1):
+        """
+        jobcontrol configuration upload
+
+        :param name: Name of the configuration
+        :param fname: File name to upload
+        :param comment: A comment on the configuration
+        :param version: The version of the configuration
+        """
         s={}
         s["content"]=json.loads(open(fname).read())
         s["name"]=name
@@ -44,17 +70,30 @@ class MongoJob:
         print resconf
 
     def configurations(self):
+        """
+        List all the configurations stored
+        """
         res=self.db.configurations.find({})
         for x in res:
             if ("comment" in x):
                 print time.ctime(x["time"]),x["version"],x["name"],x["comment"]
     def runs(self):
+        """
+        List all the run informations stored
+        """
         res=self.db.runs.find({})
         for x in res:
             if ("comment" in x):
                 print time.ctime(x["time"]),x["location"],x["run"],x["comment"]
 
     def downloadConfig(self,cname,version,toFileOnly=False):
+        """
+        Download a jobcontrol configuration to /dev/shm/mgjob/ directory
+        
+        :param cname: Configuration name
+        :param version: Configuration version
+        :param toFileOnly:if True and /dev/shm/mgjob/cname_version.json exists, then it exits
+        """
         os.system("mkdir -p /dev/shm/mgjob")
         fname="/dev/shm/mgjob/%s_%s.json" % (cname,version)
         if os.path.isfile(fname) and toFileOnly:
@@ -73,6 +112,13 @@ class MongoJob:
             return slc
         
     def getRun(self,location,comment="Not set"):
+        """
+        Get a new run number for a given setup
+
+        :param location: Setup Name
+        :param comment: Comment on the run
+        :return: a dictionnary corresponding to the base insertion {run,location,time,comment}
+        """
         res=self.db.runs.find({'location':location})
         runid={}
         for x in res:
@@ -98,6 +144,13 @@ class MongoJob:
  
      
 def instance():
+    """
+    Create a MongoJob Object
+    
+    The ENV varaible MGDBLOGIN=user/pwd@host:port@dbname mut be set
+
+    :return: The MongoJob Object
+    """
     # create the default access
     login=os.getenv("MGDBLOGIN","NONE")
     userinfo=login.split("@")[0]
