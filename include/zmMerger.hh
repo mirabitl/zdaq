@@ -40,7 +40,7 @@ namespace zdaq {
     void registerProcessor(std::string name);
     void registerDataSource(std::string url);
     inline uint32_t numberOfDataSource(){return _nDifs;}
-    inline uint32_t setNumberOfDataSource(uint32_t k){_nDifs=k;}
+    inline void setNumberOfDataSource(uint32_t k){_nDifs=k;}
     uint32_t numberOfDataPacket(uint32_t k);
     void unregisterProcessor(zdaq::zmprocessor* p);
     

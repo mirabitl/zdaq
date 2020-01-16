@@ -198,7 +198,7 @@ void zdaq::exServer::start(zdaq::fsmmessage* m)
     {
       for (std::vector<zdaq::zmPusher*>::iterator ids=_sources.begin();ids!=_sources.end();ids++)
 	{
-    (*ids)->collectorRegister();
+	  (*ids)->collectorRegister();
 	  _gthr.create_thread(boost::bind(&zdaq::exServer::readdata, this,(*ids)));
 	  ::usleep(500000);
 	}
@@ -206,9 +206,9 @@ void zdaq::exServer::start(zdaq::fsmmessage* m)
   else
     {
       LOG4CXX_INFO(_logZdaqex,"Working in event handling mode");
-  for (std::vector<zdaq::zmPusher*>::iterator ids=_sources.begin();ids!=_sources.end();ids++)
+      for (std::vector<zdaq::zmPusher*>::iterator ids=_sources.begin();ids!=_sources.end();ids++)
 	{
-    (*ids)->collectorRegister();
+	  (*ids)->collectorRegister();
 	}
       _triggerSubscriber->start();
     }

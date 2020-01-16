@@ -5,11 +5,38 @@
 
 namespace zdaq
 {
+  /**
+     \class zmPusher
+     \brief The default object to send data to the event builder
+     \details It provides all the mechanism to push data (PUSH/PULL) mechanism to the event builder
+        - it allocates a ZMQ_PUSH socket
+	- it creates a 512 kBytes zdaq::buffer
+    \author    Laurent Mirabito
+    \version   1.0
+    \date      May 2016
+    \copyright GNU Public License.
+  */
 class zmPusher
 {
 public:
+  /**
+     \brief Constructor
+     \param c , the ZMQ context
+     \param det , the detecor Id of the allocated buffer
+     \param det , the data source Id of the allocated buffer
+   */
   zmPusher( zmq::context_t* c, uint32_t det,uint32_t dif);
+
+  /**
+     \brief connect the socket to its client (Event Builder)
+     \param dest, client address (ex  "tcp://lyoxxx:5555")
+   */
   void connect(std::string dest);
+
+  /**
+     \brief connect the socket to any server
+     \param dest, listenning address (ex  "tcp://*:5556")
+   */
   void bind(std::string dest);
 
   void publish(uint64_t bx, uint32_t gtc,uint32_t len);
