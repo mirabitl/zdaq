@@ -13,7 +13,7 @@ namespace zdaq
 	- it creates a 512 kBytes zdaq::buffer
     \author    Laurent Mirabito
     \version   1.0
-    \date      May 2016
+    \date      January 2019
     \copyright GNU Public License.
   */
 class zmPusher
@@ -39,13 +39,51 @@ public:
    */
   void bind(std::string dest);
 
+  /**
+     \brief Send the buffer to the socket
+     \param bx ,  bunch crossing id
+     \param gtc , event or window id
+     \param len , actual len of the buffer
+   */
   void publish(uint64_t bx, uint32_t gtc,uint32_t len);
+
+  /**
+     \brief Send an ID message on the socket in order to register the data source in the collector process
+   */
   void collectorRegister();
+
+  /**
+     \brief access to the buffer payload
+     \return Pointer to the payload
+   */
   char* payload();
+
+  /**
+     \brief Switch compression (zlib)
+     \param t , True of False
+   */
   inline void setCompress(bool t){_compress=t;}
+
+  /**
+     \brief Compressions status
+     \return True if compression active
+   */
   inline bool isCompress() {return _compress;}
+
+  /**
+     \brief Access to zdaq::buffer
+     \return pointer to the zdaq::buffer
+   */
   inline zdaq::buffer* buffer(){return _buffer;}
+
+  /**
+     \brief Detector ID
+   */
   inline uint32_t detectorId(){return _detId;}
+
+    /**
+     \brief Data source ID
+   */
   inline uint32_t sourceId(){return _sourceId;} 
 private:
   zmq::context_t* _context;
