@@ -6,12 +6,39 @@
 #include <string>
 #include <vector>
 #include <json/json.h>
-namespace zdaq {
+namespace zdaq {  
+  /**
+     \class baseApplication
+     \brief A generic application object which provides a FSM and parameters setting
+     \details It provides 
+        - a zdaq::fsmweb object with 2 predefined states VOID and CREATED
+        the CREATE transition parse the JSON daq configuration specified in the transition zdaq::fsmmessage,
+        the application identifies itself ans set its paramaters
+        - a virtual method userCreate to add additional work during CREATE transition
+        - A parameter set 
+    \author    Laurent Mirabito
+    \version   1.0
+    \date      January 2019
+    \copyright GNU Public License.
+  */
+
 class baseApplication
 {
 public:
+
+  /**
+   * \brief Constructor
+   * \param name is the name of the zdaq::fsmweb web service
+   */
   baseApplication(std::string name);
+
+  /**
+   * \brief CREATE transition handler
+   * \param m is the zdaq::fsmmessage received for the transition, it should
+   * contain a tag 'url' or 'file' or 'mongo' in its 'content' directory to access the daq configuration file  
+   */
   void  create(zdaq::fsmmessage* m);
+
   void c_getconfiguration(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void c_getparameter(Mongoose::Request &request, Mongoose::JsonResponse &response);
   void c_setparameter(Mongoose::Request &request, Mongoose::JsonResponse &response);
