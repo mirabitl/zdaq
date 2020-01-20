@@ -39,21 +39,97 @@ public:
    */
   void  create(zdaq::fsmmessage* m);
 
+  /**
+   * \brief GETCONFIG command handler
+   * \return the JSON configuration in the response['configuration'] 
+   */
   void c_getconfiguration(Mongoose::Request &request, Mongoose::JsonResponse &response);
+
+  /**
+   * \brief GETPARAM command handler
+   * \return the JSON Parameter set in the response['PARAMETER']
+  */
   void c_getparameter(Mongoose::Request &request, Mongoose::JsonResponse &response);
+
+   /**
+   * \brief SETPARAM command handler
+   * \details it replaces the parameters set with the content of the CGI PARAMETER value
+   * \return the JSON Parameter set in the response['PARAMETER']
+  */
   void c_setparameter(Mongoose::Request &request, Mongoose::JsonResponse &response);
+
+  /**
+   * \brief INFO command handler
+   * \details it returns general information on the application
+   * \return the Info set in the response['INFO']
+  */
   void c_info(Mongoose::Request &request, Mongoose::JsonResponse &response);
+
+  /**
+   * \brief virtual user handler to the CREATE command, called after the create method
+   */
   virtual void  userCreate(zdaq::fsmmessage* m);
+
+  /**
+   * \brief  JSON configuration getter
+   * \return  JSON configuration
+   */
   Json::Value configuration();
+
+  /**
+   * \brief  JSON Parameter set getter
+   * \return  JSON Parameter set
+   */
   Json::Value& parameters();
-  Json::Value& infos();
+
+  /**
+   * \brief  JSON  Information set getter
+   * \return  JSON Inforamtion set
+   */  Json::Value& infos();
+
+
+  /**
+   * \brief Pointer to the zdaq::fsmweb
+   */
   fsmweb* fsm();
+
+  /**
+   * \brief  Application instance
+   */
   uint32_t instance(){return _instance;}
+
+   /**
+   * \brief  Application port
+   */
   uint32_t port(){return _port;}
+
+  /**
+   * \brief login (if any)
+   */
   std::string login(){return _login;}
+
+  /**
+   * \brief IP host name
+   */
   std::string host() {return _hostname;}
+
+  /**
+   * \brief process name
+   */
   std::string name() {return _processName;}
+
+
+  /**
+   * \brief Parses the configuration and find all other application with name specified
+   * \param aname is the application name to search for
+   * 
+   * The vector of fsmwebCaller is filled for each instance found.
+   */
   void findApps(std::string aname);
+
+  /**
+   * \brief the vector of fsmwebCaller filled with findApps
+   */
   std::vector<fsmwebCaller*>& callers() {return _apps;}
 protected:
   zdaq::fsmweb* _fsm;
