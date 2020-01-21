@@ -4,6 +4,11 @@
 #include "zmBuffer.hh"
 
 namespace zdaq {
+  /**
+     \brief First implementation of zmPusher
+     
+     \b obsolete Use zmPusher instead
+   */
 class zmPublisher
 {
 public:

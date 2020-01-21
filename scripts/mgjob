@@ -13,13 +13,9 @@ import time
 import argparse
 #import requests //tres long
 import MongoJob as mg
+import sys
 
 
-
-# create the default access
-#print "COUCOU"
-
-_wdd=mg.instance()
 #print "COUCOU"
 parser = argparse.ArgumentParser()
 
@@ -33,7 +29,7 @@ grp_action.add_argument('--download', action='store_true',
 
 
 grp_action.add_argument('--runs', action='store_true',help='List all the taken runs')
-grp_action.add_argument('--new-run', action='store_true',help='Find last run of a given setup (--location setup) and fill the lastrun.sjon with the next runid')
+grp_action.add_argument('--new-run', action='store_true',help='Find last run of a given setup (--location setup) and fill the lastrun.sjon with the next runid Optional: --comment=xxxx')
 
 
 # Arguments
@@ -47,8 +43,15 @@ parser.add_argument('--location', action='store', type=str,
 parser.add_argument('--file', action='store', type=str,
                     default=None, dest='file', help='Configuration file')
 
+if len(sys.argv)==1:
+    parser.print_help(sys.stderr)
+    sys.exit(1)
 
 results = parser.parse_args()
+# create the default access
+#print "COUCOU"
+
+_wdd=mg.instance()
 
 
 # Analyse results

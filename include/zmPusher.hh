@@ -22,7 +22,7 @@ public:
   /**
      \brief Constructor
      \param c , the ZMQ context
-     \param det , the detecor Id of the allocated buffer
+     \param det , the detector Id of the allocated buffer
      \param det , the data source Id of the allocated buffer
    */
   zmPusher( zmq::context_t* c, uint32_t det,uint32_t dif);

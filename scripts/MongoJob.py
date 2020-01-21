@@ -153,6 +153,9 @@ def instance():
     """
     # create the default access
     login=os.getenv("MGDBLOGIN","NONE")
+    if (login == "NONE"):
+        print "The ENV varaible MGDBLOGIN=user/pwd@host:port@dbname mut be set"
+        exit(0)
     userinfo=login.split("@")[0]
     hostinfo=login.split("@")[1]
     dbname=login.split("@")[2]
