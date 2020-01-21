@@ -3,6 +3,22 @@
 #include <zmq.hpp>
 #include <vector>
 namespace zdaq {
+  /**
+     \class zmPuller
+     \brief The default object to collect data from various zdaq::zmPusher
+     \details It can
+     - collect data from zmPusher (ZMQ_PULL)
+     - forward collected data to other collector
+
+     The poll() method should be run in a separate thread since it continously listen on all connected socket.
+     It counts the number of registered data source identified with specific headers
+
+     Eventually it provides a virtual method to process the received message
+     \author    Laurent Mirabito
+     \version   1.0
+     \date      January 2019
+     \copyright GNU Public License.
+  */
 class zmPuller
 {
 public:
