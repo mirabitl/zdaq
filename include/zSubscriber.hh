@@ -22,28 +22,30 @@
 
 namespace zdaq
 {
-  class publishedItem {
-  public:
-    publishedItem(std::string address, zmq::context_t &c);
-    ~publishedItem();
-    zmq_pollitem_t& item(){return _item;}
-    virtual void processData(std::string address,std::string contents);
-    std::string location(){return _location;}
-    std::string hardware(){return _hardware;}
-    time_t time(){return _time;}
-    Json::Value status(){return _status;}
-    zmq::socket_t& socket(){return (*_socket);}
-    std::string address(){return _address;}
-  private:
-    zmq::socket_t *_socket;
-    std::string _address;
-    zmq_pollitem_t _item;
-    std::string _location,_hardware;
-    time_t _time;
-    Json::Value _status;
+  namespace mon
+  {
+    class publishedItem {
+    public:
+      publishedItem(std::string address, zmq::context_t &c);
+      ~publishedItem();
+      zmq_pollitem_t& item(){return _item;}
+      virtual void processData(std::string address,std::string contents);
+      std::string location(){return _location;}
+      std::string hardware(){return _hardware;}
+      time_t time(){return _time;}
+      Json::Value status(){return _status;}
+      zmq::socket_t& socket(){return (*_socket);}
+      std::string address(){return _address;}
+    private:
+      zmq::socket_t *_socket;
+      std::string _address;
+      zmq_pollitem_t _item;
+      std::string _location,_hardware;
+      time_t _time;
+      Json::Value _status;
     
-  };
-typedef boost::function<void (std::vector<zdaq::publishedItem*>&) > PubFunctor;
+    };
+    typedef boost::function<void (std::vector<zdaq::mon::publishedItem*>&) > PubFunctor;
     class zSubscriber 
     {
     public:
@@ -53,12 +55,12 @@ typedef boost::function<void (std::vector<zdaq::publishedItem*>&) > PubFunctor;
       void poll();
       void start();
       void stop();
-      std::vector<zdaq::publishedItem*>& items(){return _items;}
+      std::vector<zdaq::mon::publishedItem*>& items(){return _items;}
       void lock(){_sync.lock();}
       void unlock(){_sync.unlock();}
       void addHandler(PubFunctor f){_handlers.push_back(f);}
     private:
-      std::vector<zdaq::publishedItem*> _items;
+      std::vector<zdaq::mon::publishedItem*> _items;
       zmq::pollitem_t _pollitems[1024];
       uint32_t _nItems;
       boost::thread_group g_d;
@@ -72,7 +74,7 @@ typedef boost::function<void (std::vector<zdaq::publishedItem*>&) > PubFunctor;
 
 
   };
-
+};
 
 #endif
 

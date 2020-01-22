@@ -24,7 +24,7 @@ namespace zdaq {
       bool running(){return _running;}
       inline void setDetectorId(uint32_t id) {_detid=id;}
       inline uint32_t getDetectorId() {return _detid;}
-      void checkTrigger(std::vector<zdaq::publishedItem*>& items);
+      void checkTrigger(std::vector<zdaq::mon::publishedItem*>& items);
       void fillEvent(uint32_t event,uint64_t bx,zdaq::zmPusher* ds,uint32_t eventSize);
 
     private:
@@ -40,7 +40,7 @@ namespace zdaq {
       uint32_t _plrand[0x20000];
       // Trigger Polling
   
-      zdaq::zSubscriber* _triggerSubscriber;
+      zdaq::mon::zSubscriber* _triggerSubscriber;
     };
   };
 };

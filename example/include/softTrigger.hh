@@ -34,7 +34,7 @@ namespace zdaq {
 
       // Trigger publication
 
-      zdaq::zPublisher* _triggerPublisher;
+      zdaq::mon::zPublisher* _triggerPublisher;
     };
   };
 };

@@ -35,7 +35,7 @@ zdaq::example::exServer::exServer(std::string name) : zdaq::baseApplication(name
       this->fsm()->start(atoi(wp));
     }
   _context=new zmq::context_t();
-  _triggerSubscriber = new  zdaq::zSubscriber(_context); 
+  _triggerSubscriber = new  zdaq::mon::zSubscriber(_context); 
   _triggerSubscriber->addHandler(boost::bind(&zdaq::example::exServer::checkTrigger, this,_1));
   for (int i=1;i<0x20000;i++) _plrand[i]= std::rand();
 }
@@ -149,7 +149,7 @@ void zdaq::example::exServer::fillEvent(uint32_t event,uint64_t bx,zdaq::zmPushe
     its->second=event;
 	
 }
-void zdaq::example::exServer::checkTrigger(std::vector<zdaq::publishedItem*>& items)
+void zdaq::example::exServer::checkTrigger(std::vector<zdaq::mon::publishedItem*>& items)
 {
   if (this->parameters()["mode"].asString().compare("ALONE")!=0)
     for (auto x:items)

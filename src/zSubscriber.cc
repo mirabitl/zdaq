@@ -13,9 +13,10 @@
 #include "zhelpers.hpp"
 #include <boost/algorithm/string.hpp>
 using namespace zdaq;
+using namespace zdaq::mon;
 
 
-zdaq::publishedItem::publishedItem(std::string add, zmq::context_t &c) : _address(add),_location(""),_hardware(""),_time(0),_socket(0)
+zdaq::mon::publishedItem::publishedItem(std::string add, zmq::context_t &c) : _address(add),_location(""),_hardware(""),_time(0),_socket(0)
 {
 
   _socket =new zmq::socket_t(c, ZMQ_SUB);
@@ -29,11 +30,11 @@ zdaq::publishedItem::publishedItem(std::string add, zmq::context_t &c) : _addres
    _item.revents=0;
   
 }
-zdaq::publishedItem::~publishedItem()
+zdaq::mon::publishedItem::~publishedItem()
 {
   if (_socket!=NULL) delete _socket;
 }
-void zdaq::publishedItem::processData(std::string address,std::string contents)
+void zdaq::mon::publishedItem::processData(std::string address,std::string contents)
 {
   std::vector<std::string> strs;
   strs.clear();
@@ -47,12 +48,12 @@ void zdaq::publishedItem::processData(std::string address,std::string contents)
   
 }
 
-zdaq::zSubscriber::zSubscriber(zmq::context_t* context) :  _running(false),_context(context)
+zdaq::mon::zSubscriber::zSubscriber(zmq::context_t* context) :  _running(false),_context(context)
 {
   //_fsm=this->fsm();
   this->unlock();
 }
-void zdaq::zSubscriber::clear()
+void zdaq::mon::zSubscriber::clear()
 {
   if (_context==0) return;
   for (auto x:_items)
@@ -61,24 +62,24 @@ void zdaq::zSubscriber::clear()
   _handlers.clear();
   
 }
-void zdaq::zSubscriber::addStream(std::string str)
+void zdaq::mon::zSubscriber::addStream(std::string str)
 {
  
     LOG4CXX_INFO(_logZdaq," Registering stream: "<<str);
-	  zdaq::publishedItem* item=new  zdaq::publishedItem(str,(*_context));
+	  zdaq::mon::publishedItem* item=new  zdaq::mon::publishedItem(str,(*_context));
 	  _items.push_back(item);
 	
   
 }
 
-void zdaq::zSubscriber::start()
+void zdaq::mon::zSubscriber::start()
 {
    LOG4CXX_INFO(_logZdaq," Starting");
   _running=true;
-  g_d.create_thread(boost::bind(&zdaq::zSubscriber::poll,this));
+  g_d.create_thread(boost::bind(&zdaq::mon::zSubscriber::poll,this));
 }
 
-void zdaq::zSubscriber::stop()
+void zdaq::mon::zSubscriber::stop()
 {
    LOG4CXX_INFO(_logZdaq," Stopping");
 
@@ -86,7 +87,7 @@ void zdaq::zSubscriber::stop()
   g_d.join_all();
 }
 
-void zdaq::zSubscriber::poll()
+void zdaq::mon::zSubscriber::poll()
 {
   char *zErrMsg = 0;
   int rc;

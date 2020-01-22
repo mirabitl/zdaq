@@ -66,7 +66,7 @@ void zdaq::example::softTrigger::configure(zdaq::fsmmessage* m)
   _datasize=this->parameters()["datasize"].asUInt();
 
   if (_triggerPublisher==NULL)
-    _triggerPublisher = new  zdaq::zPublisher(_hardware,_location,_tcpPort,_context); 
+    _triggerPublisher = new  zdaq::mon::zPublisher(_hardware,_location,_tcpPort,_context); 
    
 }
 /**
