@@ -24,7 +24,7 @@ int main()
   std::cout<<"Starting  "<<s0.str()<<std::endl;
 
 
-  zdaq::exServer* s=new zdaq::exServer(s0.str());
+  zdaq_example::exServer* s=new zdaq_example::exServer(s0.str());
   while (true)
     sleep((unsigned int) 3);
 }

@@ -8,6 +8,8 @@
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 
 using namespace zdaq;
+using namespace zdaq_example;
+
 exRunControl::exRunControl(std::string name) : zdaq::baseApplication(name)
   {
     _builderClient=0;_triggerClient=0;

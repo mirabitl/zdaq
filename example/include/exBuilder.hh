@@ -6,7 +6,7 @@
 #include "binarywriter.hh"
 #include "zdaqLogger.hh"
 
-namespace zdaq {
+namespace zdaq_example {
   class exBuilder : public zdaq::baseApplication {
   public:
     exBuilder(std::string name);

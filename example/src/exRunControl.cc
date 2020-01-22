@@ -22,7 +22,7 @@ int main()
   std::cout<<"Starting  "<<s0.str()<<std::endl;
 
 
-  zdaq::exRunControl* s=new zdaq::exRunControl(s0.str());
+  zdaq_example::exRunControl* s=new zdaq_example::exRunControl(s0.str());
   while (true)
     sleep((unsigned int) 3);
 }

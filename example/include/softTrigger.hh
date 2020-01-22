@@ -5,7 +5,7 @@
 #include "zdaqLogger.hh"
 
 
-namespace zdaq {
+namespace zdaq_example {
   class softTrigger :public zdaq::baseApplication {
   public:
     softTrigger(std::string name);

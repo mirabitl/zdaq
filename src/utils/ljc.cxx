@@ -1,6 +1,7 @@
 #include "fsmjob.hh"
 #include <unistd.h>
 using namespace zdaq;
+using namespace zdaq_jc;
 int main()
 {
   char hostn[80];

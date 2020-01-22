@@ -7,7 +7,7 @@
 #include "zdaqLogger.hh"
 
 
-namespace zdaq {
+namespace zdaq_example {
   class exServer :public zdaq::baseApplication {
   public:
     exServer(std::string name);

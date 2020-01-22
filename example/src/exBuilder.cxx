@@ -1,8 +1,9 @@
 #include "exBuilder.hh"
 
 using namespace zdaq;
+using namespace zdaq_example;
 
-zdaq::exBuilder::exBuilder(std::string name) : zdaq::baseApplication(name),_running(false),_merger(NULL)
+zdaq_example::exBuilder::exBuilder(std::string name) : zdaq::baseApplication(name),_running(false),_merger(NULL)
 {
   _context = new zmq::context_t (1);
   _merger= new zdaq::zmMerger(_context);
@@ -10,17 +11,17 @@ zdaq::exBuilder::exBuilder(std::string name) : zdaq::baseApplication(name),_runn
   this->fsm()->addState("CREATED");
   this->fsm()->addState("CONFIGURED");
   this->fsm()->addState("RUNNING");
-  this->fsm()->addTransition("CONFIGURE","CREATED","CONFIGURED",boost::bind(&zdaq::exBuilder::configure, this,_1));
-  this->fsm()->addTransition("CONFIGURE","CONFIGURED","CONFIGURED",boost::bind(&zdaq::exBuilder::configure, this,_1));
-  this->fsm()->addTransition("START","CONFIGURED","RUNNING",boost::bind(&zdaq::exBuilder::start, this,_1));
-  this->fsm()->addTransition("STOP","RUNNING","CONFIGURED",boost::bind(&zdaq::exBuilder::stop, this,_1));
-  this->fsm()->addTransition("HALT","RUNNING","CREATED",boost::bind(&zdaq::exBuilder::halt, this,_1));
-  this->fsm()->addTransition("HALT","CONFIGURED","CREATED",boost::bind(&zdaq::exBuilder::halt, this,_1));
+  this->fsm()->addTransition("CONFIGURE","CREATED","CONFIGURED",boost::bind(&zdaq_example::exBuilder::configure, this,_1));
+  this->fsm()->addTransition("CONFIGURE","CONFIGURED","CONFIGURED",boost::bind(&zdaq_example::exBuilder::configure, this,_1));
+  this->fsm()->addTransition("START","CONFIGURED","RUNNING",boost::bind(&zdaq_example::exBuilder::start, this,_1));
+  this->fsm()->addTransition("STOP","RUNNING","CONFIGURED",boost::bind(&zdaq_example::exBuilder::stop, this,_1));
+  this->fsm()->addTransition("HALT","RUNNING","CREATED",boost::bind(&zdaq_example::exBuilder::halt, this,_1));
+  this->fsm()->addTransition("HALT","CONFIGURED","CREATED",boost::bind(&zdaq_example::exBuilder::halt, this,_1));
 
-  this->fsm()->addCommand("STATUS",boost::bind(&zdaq::exBuilder::status, this,_1,_2));
-  this->fsm()->addCommand("REGISTERDS",boost::bind(&zdaq::exBuilder::registerds, this,_1,_2));
-  this->fsm()->addCommand("SETHEADER",boost::bind(&zdaq::exBuilder::c_setheader,this,_1,_2));
-  this->fsm()->addCommand("PURGE",boost::bind(&zdaq::exBuilder::c_purge,this,_1,_2));
+  this->fsm()->addCommand("STATUS",boost::bind(&zdaq_example::exBuilder::status, this,_1,_2));
+  this->fsm()->addCommand("REGISTERDS",boost::bind(&zdaq_example::exBuilder::registerds, this,_1,_2));
+  this->fsm()->addCommand("SETHEADER",boost::bind(&zdaq_example::exBuilder::c_setheader,this,_1,_2));
+  this->fsm()->addCommand("PURGE",boost::bind(&zdaq_example::exBuilder::c_purge,this,_1,_2));
 
   //Start server
   char* wp=getenv("WEBPORT");
@@ -33,7 +34,7 @@ zdaq::exBuilder::exBuilder(std::string name) : zdaq::baseApplication(name),_runn
 
 }
 
-void zdaq::exBuilder::configure(zdaq::fsmmessage* m)
+void zdaq_example::exBuilder::configure(zdaq::fsmmessage* m)
 {
   LOG4CXX_INFO(_logZdaqex,__PRETTY_FUNCTION__<<"Received "<<m->command()<<" Value "<<m->value());
   // Store message content in paramters
@@ -94,7 +95,7 @@ void zdaq::exBuilder::configure(zdaq::fsmmessage* m)
   return;
 }
 
-void zdaq::exBuilder::start(zdaq::fsmmessage* m)
+void zdaq_example::exBuilder::start(zdaq::fsmmessage* m)
 {
 
   Json::Value jc=m->content();
@@ -103,14 +104,14 @@ void zdaq::exBuilder::start(zdaq::fsmmessage* m)
 
   LOG4CXX_INFO(_logZdaqex,__PRETTY_FUNCTION__<<"Run "<<jc["run"].asInt()<<" is started ");
 }
-void zdaq::exBuilder::stop(zdaq::fsmmessage* m)
+void zdaq_example::exBuilder::stop(zdaq::fsmmessage* m)
 {
   
   _merger->stop();
   _running=false;
   LOG4CXX_INFO(_logZdaqex,__PRETTY_FUNCTION__<<"Builder is stopped \n");fflush(stdout);
 }
-void zdaq::exBuilder::halt(zdaq::fsmmessage* m)
+void zdaq_example::exBuilder::halt(zdaq::fsmmessage* m)
 {
   
   
@@ -121,7 +122,7 @@ void zdaq::exBuilder::halt(zdaq::fsmmessage* m)
   //stop data sources
   _merger->clear();
 }
-void zdaq::exBuilder::status(Mongoose::Request &request, Mongoose::JsonResponse &response)
+void zdaq_example::exBuilder::status(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
   //std::cout<<"dowmnload"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData()<<std::endl;
   if (_merger!=NULL)
@@ -133,7 +134,7 @@ void zdaq::exBuilder::status(Mongoose::Request &request, Mongoose::JsonResponse 
   else
     response["answer"]="NO merger created yet";
 }
-void zdaq::exBuilder::registerds(Mongoose::Request &request, Mongoose::JsonResponse &response)
+void zdaq_example::exBuilder::registerds(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
   //std::cout<<"registerds"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData()<<std::endl;
   if (_merger!=NULL)
@@ -145,7 +146,7 @@ void zdaq::exBuilder::registerds(Mongoose::Request &request, Mongoose::JsonRespo
   else
     response["answer"]="NO merger created yet";
 }
-void zdaq::exBuilder::c_purge(Mongoose::Request &request, Mongoose::JsonResponse &response)
+void zdaq_example::exBuilder::c_purge(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
   //std::cout<<"registerds"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData()<<std::endl;
   if (_merger!=NULL)
@@ -157,7 +158,7 @@ void zdaq::exBuilder::c_purge(Mongoose::Request &request, Mongoose::JsonResponse
   else
     response["answer"]="NO merger created yet";
 }
-void zdaq::exBuilder::c_setheader(Mongoose::Request &request, Mongoose::JsonResponse &response)
+void zdaq_example::exBuilder::c_setheader(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
 
   if (_merger==NULL)    {response["STATUS"]="NO EVB created"; return;}

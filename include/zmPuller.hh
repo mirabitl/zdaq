@@ -22,13 +22,50 @@ namespace zdaq {
 class zmPuller
 {
 public:
+  /**
+     \brief Constructor
+
+     \param c the ZMQ context
+   */
   zmPuller( zmq::context_t* c);
+
+  /**
+     \brief add an input data stream (zmPusher)
+
+     \param fn Input data stream name, typically 'tcp://*:5555' Where 5555 is the listening port in server mode
+     \param server Mode is true when binding connection from data source, non server mode is not deeply tested
+   */
   void addInputStream(std::string fn,bool server=true);
+
+  /**
+     \brief Forward stream
+
+     \param fn Output data stream, typically 'tcp://monpc:5556', it is used to forward collected data to another builder
+   */
   void addOutputStream(std::string fn);
-  void enablePolling();
-  void disablePolling(); 
+
+  
+  void enablePolling(); ///< To be called before poll()
+  void disablePolling(); ///< Stop the polling loop
+
+  /**
+     \brief Polling loop
+
+     \details During the polling loop, data from input stream are collected:
+      - If the header is an IDentity type , the number of registered data sources is incremented
+      - if the header is a DS(Data Source) type, the data are processed with the processData method
+      - if an OutputStream exists the data are forward to it
+   */
   void poll();
+
+  /**
+     \brief Number of registered data  source
+   */
   inline uint32_t registered(){return _nregistered;}
+
+  /**
+     \brief Virtual data processing, to be implemented in daughter class
+   */
   void virtual processData(std::string idd,zmq::message_t *message){;}
 
 private:

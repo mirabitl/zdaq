@@ -7,7 +7,7 @@
 #include <json/json.h>
 #include "zdaqLogger.hh"
 
-namespace zdaq
+namespace zdaq_example
 {
 class exRunControl : public zdaq::baseApplication
 {

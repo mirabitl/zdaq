@@ -12,10 +12,10 @@
 // -- json headers
 #include "json/json.h"
 
-namespace zdaq
+namespace zdaq_jc
 {
 /**
- *  @brief  DimProcessData class
+ *  @brief  Process Information  class
  */
 class processData
 {
@@ -62,14 +62,14 @@ public:
 
   void registerfile(Mongoose::Request &request, Mongoose::JsonResponse &response);
 protected:
-  void startProcess(zdaq::processData* pd);
+  void startProcess(zdaq_jc::processData* pd);
   void killProcess(uint32_t pid,uint32_t sig=9);
   Json::Value jsonStatus();
   Json::Value jsonInfo();
   void buildJobConfig();
 private:
   zdaq::fsmweb* _fsm;
-  typedef std::map<pid_t,zdaq::processData*> PidToProcessMap;
+  typedef std::map<pid_t,zdaq_jc::processData*> PidToProcessMap;
   Json::Value m_jfile,m_jconf,m_configContent;
   std::string        m_hostname;         ///< The host name on which the job control is running
   uint32_t m_port;
