@@ -3,9 +3,9 @@
 #include <sstream>
 
 using namespace zdaq;
-using namespace zdaq_example;
+using namespace zdaq::example;
 
-zdaq_example::exServer::exServer(std::string name) : zdaq::baseApplication(name),_running(false),_detid(0),_event(0),_bx(0)
+zdaq::example::exServer::exServer(std::string name) : zdaq::baseApplication(name),_running(false),_detid(0),_event(0),_bx(0)
 {
   _fsm=this->fsm();
   
@@ -14,16 +14,16 @@ zdaq_example::exServer::exServer(std::string name) : zdaq::baseApplication(name)
   _fsm->addState("INITIALISED");
   _fsm->addState("CONFIGURED");
   _fsm->addState("RUNNING");
-  _fsm->addTransition("INITIALISE","CREATED","INITIALISED",boost::bind(&zdaq_example::exServer::initialise, this,_1));
-  _fsm->addTransition("CONFIGURE","INITIALISED","CONFIGURED",boost::bind(&zdaq_example::exServer::configure, this,_1));
-  _fsm->addTransition("CONFIGURE","CONFIGURED","CONFIGURED",boost::bind(&zdaq_example::exServer::configure, this,_1));
-  _fsm->addTransition("START","CONFIGURED","RUNNING",boost::bind(&zdaq_example::exServer::start, this,_1));
-  _fsm->addTransition("STOP","RUNNING","CONFIGURED",boost::bind(&zdaq_example::exServer::stop, this,_1));
-  _fsm->addTransition("HALT","RUNNING","INITIALISED",boost::bind(&zdaq_example::exServer::halt, this,_1));
-  _fsm->addTransition("HALT","CONFIGURED","INITIALISED",boost::bind(&zdaq_example::exServer::halt, this,_1));
+  _fsm->addTransition("INITIALISE","CREATED","INITIALISED",boost::bind(&zdaq::example::exServer::initialise, this,_1));
+  _fsm->addTransition("CONFIGURE","INITIALISED","CONFIGURED",boost::bind(&zdaq::example::exServer::configure, this,_1));
+  _fsm->addTransition("CONFIGURE","CONFIGURED","CONFIGURED",boost::bind(&zdaq::example::exServer::configure, this,_1));
+  _fsm->addTransition("START","CONFIGURED","RUNNING",boost::bind(&zdaq::example::exServer::start, this,_1));
+  _fsm->addTransition("STOP","RUNNING","CONFIGURED",boost::bind(&zdaq::example::exServer::stop, this,_1));
+  _fsm->addTransition("HALT","RUNNING","INITIALISED",boost::bind(&zdaq::example::exServer::halt, this,_1));
+  _fsm->addTransition("HALT","CONFIGURED","INITIALISED",boost::bind(&zdaq::example::exServer::halt, this,_1));
   
-  _fsm->addCommand("DOWNLOAD",boost::bind(&zdaq_example::exServer::download, this,_1,_2));
-  _fsm->addCommand("STATUS",boost::bind(&zdaq_example::exServer::status, this,_1,_2));
+  _fsm->addCommand("DOWNLOAD",boost::bind(&zdaq::example::exServer::download, this,_1,_2));
+  _fsm->addCommand("STATUS",boost::bind(&zdaq::example::exServer::status, this,_1,_2));
   
   //Start server
   
@@ -36,16 +36,16 @@ zdaq_example::exServer::exServer(std::string name) : zdaq::baseApplication(name)
     }
   _context=new zmq::context_t();
   _triggerSubscriber = new  zdaq::zSubscriber(_context); 
-  _triggerSubscriber->addHandler(boost::bind(&zdaq_example::exServer::checkTrigger, this,_1));
+  _triggerSubscriber->addHandler(boost::bind(&zdaq::example::exServer::checkTrigger, this,_1));
   for (int i=1;i<0x20000;i++) _plrand[i]= std::rand();
 }
-void zdaq_example::exServer::initialise(zdaq::fsmmessage* m)
+void zdaq::example::exServer::initialise(zdaq::fsmmessage* m)
 {
   
   LOG4CXX_INFO(_logZdaqex," Receiving: "<<m->command()<<" value:"<<m->value());
   //this->autoDiscover();
 }
-void zdaq_example::exServer::configure(zdaq::fsmmessage* m)
+void zdaq::example::exServer::configure(zdaq::fsmmessage* m)
 {
   
   LOG4CXX_INFO(_logZdaqex," Receiving: "<<m->command()<<" value:"<<m->value());
@@ -127,7 +127,7 @@ void zdaq_example::exServer::configure(zdaq::fsmmessage* m)
 /**
  * Thread process per zmPusher
  */
-void zdaq_example::exServer::fillEvent(uint32_t event,uint64_t bx,zdaq::zmPusher* ds,uint32_t eventSize)
+void zdaq::example::exServer::fillEvent(uint32_t event,uint64_t bx,zdaq::zmPusher* ds,uint32_t eventSize)
 {
   if (eventSize==0)
     {
@@ -149,7 +149,7 @@ void zdaq_example::exServer::fillEvent(uint32_t event,uint64_t bx,zdaq::zmPusher
     its->second=event;
 	
 }
-void zdaq_example::exServer::checkTrigger(std::vector<zdaq::publishedItem*>& items)
+void zdaq::example::exServer::checkTrigger(std::vector<zdaq::publishedItem*>& items)
 {
   if (this->parameters()["mode"].asString().compare("ALONE")!=0)
     for (auto x:items)
@@ -164,7 +164,7 @@ void zdaq_example::exServer::checkTrigger(std::vector<zdaq::publishedItem*>& ite
 	    }
 	}
 }
-void zdaq_example::exServer::readdata(zdaq::zmPusher *ds)
+void zdaq::example::exServer::readdata(zdaq::zmPusher *ds)
 {
   uint32_t last_evt=0;
   std::srand(std::time(0));
@@ -190,7 +190,7 @@ void zdaq_example::exServer::readdata(zdaq::zmPusher *ds)
 /**
  * Transition from CONFIGURED to RUNNING, starts one thread per data source
  */
-void zdaq_example::exServer::start(zdaq::fsmmessage* m)
+void zdaq::example::exServer::start(zdaq::fsmmessage* m)
 {
   std::cout<<"Received "<<m->command()<<std::endl;
   _event=0;
@@ -200,7 +200,7 @@ void zdaq_example::exServer::start(zdaq::fsmmessage* m)
       for (std::vector<zdaq::zmPusher*>::iterator ids=_sources.begin();ids!=_sources.end();ids++)
 	{
 	  (*ids)->collectorRegister();
-	  _gthr.create_thread(boost::bind(&zdaq_example::exServer::readdata, this,(*ids)));
+	  _gthr.create_thread(boost::bind(&zdaq::example::exServer::readdata, this,(*ids)));
 	  ::usleep(500000);
 	}
     }
@@ -217,7 +217,7 @@ void zdaq_example::exServer::start(zdaq::fsmmessage* m)
 /**
  * RUNNING to CONFIGURED, Stop threads 
  */
-void zdaq_example::exServer::stop(zdaq::fsmmessage* m)
+void zdaq::example::exServer::stop(zdaq::fsmmessage* m)
 {
   
   
@@ -236,7 +236,7 @@ void zdaq_example::exServer::stop(zdaq::fsmmessage* m)
 /**
  * go back to CREATED, call stop and destroy sources
  */
-void zdaq_example::exServer::halt(zdaq::fsmmessage* m)
+void zdaq::example::exServer::halt(zdaq::fsmmessage* m)
 {
   
   
@@ -254,7 +254,7 @@ void zdaq_example::exServer::halt(zdaq::fsmmessage* m)
  * Standalone command DOWNLOAD, unused but it might be used to download data to 
  * configure the hardware
  */
-void zdaq_example::exServer::download(Mongoose::Request &request, Mongoose::JsonResponse &response)
+void zdaq::example::exServer::download(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
   std::cout<<"download"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData()<<std::endl;
   response["answer"]="download called to be implemented";
@@ -262,7 +262,7 @@ void zdaq_example::exServer::download(Mongoose::Request &request, Mongoose::Json
 /**
  * Standalone command LIST to get the statistics of each data source 
  */
-void zdaq_example::exServer::status(Mongoose::Request &request, Mongoose::JsonResponse &response)
+void zdaq::example::exServer::status(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
   std::cout<<"list"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData()<<std::endl;
   Json::Value array_keys;

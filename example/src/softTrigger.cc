@@ -24,7 +24,7 @@ int main()
   std::cout<<"Starting  "<<s0.str()<<std::endl;
 
 
-  zdaq_example::softTrigger* s=new zdaq_example::softTrigger(s0.str());
+  zdaq::example::softTrigger* s=new zdaq::example::softTrigger(s0.str());
   while (true)
     sleep((unsigned int) 3);
 }

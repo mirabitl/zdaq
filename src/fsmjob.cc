@@ -72,7 +72,7 @@ bool checkIP(std::string host)
 std::string wget(std::string url);
 
 using namespace zdaq;
-using namespace zdaq_jc;
+using namespace zdaq::jc;
 
 #define INFO_PRINT_ENABLED 1
 
@@ -371,9 +371,9 @@ void fsmjob::initialise(zdaq::fsmmessage* m)
       m->setAnswer(m_jconf);
  
 }
-void fsmjob::startProcess(zdaq_jc::processData* pProcessData)
+void fsmjob::startProcess(zdaq::jc::processData* pProcessData)
 {
-  if (pProcessData->m_status != zdaq_jc::processData::NOT_CREATED)
+  if (pProcessData->m_status != zdaq::jc::processData::NOT_CREATED)
     return;
 
   std::string programName = pProcessData->m_processInfo["PROGRAM"].asString();
@@ -396,7 +396,7 @@ void fsmjob::startProcess(zdaq_jc::processData* pProcessData)
   if (pid != 0)
     {
       pProcessData->m_childPid = pid;
-      pProcessData->m_status = zdaq_jc::processData::RUNNING;
+      pProcessData->m_status = zdaq::jc::processData::RUNNING;
       return;
     }
 
@@ -512,13 +512,13 @@ void fsmjob::killProcess(uint32_t pid, uint32_t sig)
 
 	while (iter != m_processMap.end())
 	{
-	  if (iter->second->m_status == zdaq_jc::processData::RUNNING && pid == iter->first)
+	  if (iter->second->m_status == zdaq::jc::processData::RUNNING && pid == iter->first)
 		{
 		  PidToProcessMap::iterator toErase = iter;
 
 		  ::kill(iter->first, sig);
 
-		  iter->second->m_status = zdaq_jc::processData::KILLED;
+		  iter->second->m_status = zdaq::jc::processData::KILLED;
 		  delete iter->second;
 
 		  ++iter;
@@ -544,7 +544,7 @@ void fsmjob::start(zdaq::fsmmessage* m)
       std::string jsonString = fastWriter.write(book);
       // std::cout<<"In Start1 "<<std::endl;
 		// create, start and register the process
-      zdaq_jc::processData *pProcessData = new zdaq_jc::processData(jsonString);
+      zdaq::jc::processData *pProcessData = new zdaq::jc::processData(jsonString);
       //std::cout<<" apres le process "<<std::endl;
       //getchar();
       this->startProcess(pProcessData);
@@ -738,7 +738,7 @@ void fsmjob::restartjob(Mongoose::Request &request, Mongoose::JsonResponse &resp
     {
       killProcess(pid,sig);
 
-      zdaq_jc::processData *pProcessData = new zdaq_jc::processData(jss);
+      zdaq::jc::processData *pProcessData = new zdaq::jc::processData(jss);
       this->startProcess(pProcessData);
       m_processMap.insert(PidToProcessMap::value_type(pProcessData->m_childPid, pProcessData));
       response["JOBS"]=this->jsonStatus();

@@ -3,9 +3,9 @@
 #include <sstream>
 
 using namespace zdaq;
-using namespace zdaq_example;
+using namespace zdaq::example;
 
-zdaq_example::softTrigger::softTrigger(std::string name) : zdaq::baseApplication(name),_running(false),_microsleep(100000),_event(0),_bx(0),_hardware("SoftTrigger"),_location("ANYWHWERE")
+zdaq::example::softTrigger::softTrigger(std::string name) : zdaq::baseApplication(name),_running(false),_microsleep(100000),_event(0),_bx(0),_hardware("SoftTrigger"),_location("ANYWHWERE")
 {
   _fsm=this->fsm();
   
@@ -13,16 +13,16 @@ zdaq_example::softTrigger::softTrigger(std::string name) : zdaq::baseApplication
   _fsm->addState("CREATED");
   _fsm->addState("CONFIGURED");
   _fsm->addState("RUNNING");
-  _fsm->addTransition("CONFIGURE","CREATED","CONFIGURED",boost::bind(&zdaq_example::softTrigger::configure, this,_1));
-  _fsm->addTransition("CONFIGURE","CONFIGURED","CONFIGURED",boost::bind(&zdaq_example::softTrigger::configure, this,_1));
-  _fsm->addTransition("START","CONFIGURED","RUNNING",boost::bind(&zdaq_example::softTrigger::start, this,_1));
-  _fsm->addTransition("STOP","RUNNING","CONFIGURED",boost::bind(&zdaq_example::softTrigger::stop, this,_1));
-  _fsm->addTransition("HALT","RUNNING","CREATED",boost::bind(&zdaq_example::softTrigger::halt, this,_1));
-  _fsm->addTransition("HALT","CONFIGURED","CREATED",boost::bind(&zdaq_example::softTrigger::halt, this,_1));
+  _fsm->addTransition("CONFIGURE","CREATED","CONFIGURED",boost::bind(&zdaq::example::softTrigger::configure, this,_1));
+  _fsm->addTransition("CONFIGURE","CONFIGURED","CONFIGURED",boost::bind(&zdaq::example::softTrigger::configure, this,_1));
+  _fsm->addTransition("START","CONFIGURED","RUNNING",boost::bind(&zdaq::example::softTrigger::start, this,_1));
+  _fsm->addTransition("STOP","RUNNING","CONFIGURED",boost::bind(&zdaq::example::softTrigger::stop, this,_1));
+  _fsm->addTransition("HALT","RUNNING","CREATED",boost::bind(&zdaq::example::softTrigger::halt, this,_1));
+  _fsm->addTransition("HALT","CONFIGURED","CREATED",boost::bind(&zdaq::example::softTrigger::halt, this,_1));
   
-  _fsm->addCommand("STATUS",boost::bind(&zdaq_example::softTrigger::c_status, this,_1,_2));
-  _fsm->addCommand("PERIOD",boost::bind(&zdaq_example::softTrigger::c_period, this,_1,_2));
-  _fsm->addCommand("SIZE",boost::bind(&zdaq_example::softTrigger::c_size, this,_1,_2));
+  _fsm->addCommand("STATUS",boost::bind(&zdaq::example::softTrigger::c_status, this,_1,_2));
+  _fsm->addCommand("PERIOD",boost::bind(&zdaq::example::softTrigger::c_period, this,_1,_2));
+  _fsm->addCommand("SIZE",boost::bind(&zdaq::example::softTrigger::c_size, this,_1,_2));
   
   //Start server
   
@@ -37,7 +37,7 @@ zdaq_example::softTrigger::softTrigger(std::string name) : zdaq::baseApplication
   _triggerPublisher=NULL;
 }
 
-void zdaq_example::softTrigger::configure(zdaq::fsmmessage* m)
+void zdaq::example::softTrigger::configure(zdaq::fsmmessage* m)
 {
   
   LOG4CXX_INFO(_logZdaqex," Receiving: "<<m->command()<<" value:"<<m->value());
@@ -72,7 +72,7 @@ void zdaq_example::softTrigger::configure(zdaq::fsmmessage* m)
 /**
  * Thread process per zmPusher
  */
-Json::Value zdaq_example::softTrigger::status()
+Json::Value zdaq::example::softTrigger::status()
 {
   
   Json::Value r=Json::Value::null;
@@ -84,7 +84,7 @@ Json::Value zdaq_example::softTrigger::status()
   return r;
 }
 
-void zdaq_example::softTrigger::publishingThread()
+void zdaq::example::softTrigger::publishingThread()
 {
   _event=0;
   while (_running)
@@ -101,19 +101,19 @@ void zdaq_example::softTrigger::publishingThread()
 /**
  * Transition from CONFIGURED to RUNNING, starts one thread per data source
  */
-void zdaq_example::softTrigger::start(zdaq::fsmmessage* m)
+void zdaq::example::softTrigger::start(zdaq::fsmmessage* m)
 {
   std::cout<<"Received "<<m->command()<<std::endl;
   _event=0;
   _running=true;
   
-  _gthr.create_thread(boost::bind(&zdaq_example::softTrigger::publishingThread, this));
+  _gthr.create_thread(boost::bind(&zdaq::example::softTrigger::publishingThread, this));
     
 }
 /**
  * RUNNING to CONFIGURED, Stop threads 
  */
-void zdaq_example::softTrigger::stop(zdaq::fsmmessage* m)
+void zdaq::example::softTrigger::stop(zdaq::fsmmessage* m)
 {
   
   
@@ -131,7 +131,7 @@ void zdaq_example::softTrigger::stop(zdaq::fsmmessage* m)
 /**
  * go back to CREATED, call stop and destroy sources
  */
-void zdaq_example::softTrigger::halt(zdaq::fsmmessage* m)
+void zdaq::example::softTrigger::halt(zdaq::fsmmessage* m)
 {
   
   
@@ -148,13 +148,13 @@ void zdaq_example::softTrigger::halt(zdaq::fsmmessage* m)
 /**
  * Standalone command STATUS to get the statistics of each data source 
  */
-void zdaq_example::softTrigger::c_status(Mongoose::Request &request, Mongoose::JsonResponse &response)
+void zdaq::example::softTrigger::c_status(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
   std::cout<<"list"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData()<<std::endl;
   response["answer"]=this->status();
 
 }
-void zdaq_example::softTrigger::c_period(Mongoose::Request &request, Mongoose::JsonResponse &response)
+void zdaq::example::softTrigger::c_period(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
   std::cout<<"list"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData()<<std::endl;
   uint32_t period=atoi(request.get("period","1000000").c_str());
@@ -163,7 +163,7 @@ void zdaq_example::softTrigger::c_period(Mongoose::Request &request, Mongoose::J
   response["answer"]=this->status();
 
 }
-void zdaq_example::softTrigger::c_size(Mongoose::Request &request, Mongoose::JsonResponse &response)
+void zdaq::example::softTrigger::c_size(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
   std::cout<<"list"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData()<<std::endl;
   uint32_t psize=atoi(request.get("size","32").c_str());

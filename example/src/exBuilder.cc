@@ -24,7 +24,7 @@ int main()
   std::cout<<"Starting  "<<s0.str()<<std::endl;
 
 
-  zdaq_example::exBuilder* s=new zdaq_example::exBuilder(s0.str());
+  zdaq::example::exBuilder* s=new zdaq::example::exBuilder(s0.str());
   while (true)
     sleep((unsigned int) 3);
 }

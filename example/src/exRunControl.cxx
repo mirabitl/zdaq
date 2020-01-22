@@ -8,7 +8,7 @@
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 
 using namespace zdaq;
-using namespace zdaq_example;
+using namespace zdaq::example;
 
 exRunControl::exRunControl(std::string name) : zdaq::baseApplication(name)
   {
