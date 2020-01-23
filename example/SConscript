@@ -133,11 +133,11 @@ env['BUILDERS']['PythonModule'] = SWIGSharedLibrary
 
 
 # Library source
-LIBRARY_SOURCES=Glob("#src/*.cxx")
+LIBRARY_SOURCES=Glob("src/*.cxx")
 
 #print LIBRARY_SOURCES
 #Shared library
-lzdaqex=env.SharedLibrary("#lib/zdaqex",LIBRARY_SOURCES)
+lzdaqex=env.SharedLibrary("lib/zdaqex",LIBRARY_SOURCES)
 
 
 
