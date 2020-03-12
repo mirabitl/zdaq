@@ -85,7 +85,17 @@ class MongoJob:
         for x in res:
             if ("comment" in x):
                 print time.ctime(x["time"]),x["location"],x["run"],x["comment"]
-
+                print x["time"],x["location"],x["run"],x["comment"]
+    def runInfo(self,run,loc):
+        """
+        Eun info on a given run
+        """
+        res=self.db.runs.find({"run":run,"location":loc})
+        for x in res:
+            if ("comment" in x):
+                print x["time"],x["location"],x["run"],x["comment"]
+            return x
+        return None
     def downloadConfig(self,cname,version,toFileOnly=False):
         """
         Download a jobcontrol configuration to /dev/shm/mgjob/ directory
