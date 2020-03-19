@@ -9,10 +9,29 @@ using namespace std;
 
 namespace zdaq {
   namespace mon {
-  
+   /**
+     \class zPublisher
+     \brief A generic application object which provides s Publication mechanism for slow control
+     \details It creates a server socket on a given port, registers a hardware name and a setup location. It also provides a post method that will publish a given Json status with hardware,location, and time tag.
+       
+    \author    Laurent Mirabito
+    \version   1.0
+    \date      January 2019
+    \copyright GNU Public License.
+  */ 
     class zPublisher 
     {
     public:
+      /**
+       * \brief Constructor
+       *
+       * \param hardware is the name of the hardware monitored (BMP,HIH8000,CAEN1527...)
+       * \param location is the name of the setup/experiment
+       * \param tcp is the TCP port used to publish
+       * \param c is the ZMQ context
+       *
+       * \details the ZMQ_PUB socket is created and bind
+       */
       zPublisher(std::string hardware,std::string location,uint32_t tcp,zmq::context_t* c) : _hardware(hardware),_location(location),_tcpPort(tcp),_context(c)
       {
         _publisher= new zmq::socket_t((*_context), ZMQ_PUB);
@@ -21,7 +40,10 @@ namespace zdaq {
 	std::cout<<"Binding to "<<sport.str()<<std::endl;
 	_publisher->bind(sport.str());
       }
-
+      /**
+       * \brief Post the hardware status
+       * \param status is the JSON value of the hardware status (free to the user)
+       */
       void post(Json::Value status)
       {
 	Json::FastWriter fastWriter;
@@ -48,7 +70,13 @@ namespace zdaq {
 	_publisher->send(ma2);
 	 
       }
+      /**
+       * \brief Hardware name
+       */
       std::string hardware(){return _hardware;}
+      /**
+       * \brief Setup/experiment name
+       */
       std::string location() {return _location;}
     protected:
       std::string _hardware,_location;

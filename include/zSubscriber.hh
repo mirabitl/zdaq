@@ -24,6 +24,20 @@ namespace zdaq
 {
   namespace mon
   {
+     /**
+     \class publishedItem
+     \brief A generic application object which provides a FSM and parameters setting
+     \details It provides 
+        - a zdaq::fsmweb object with 2 predefined states VOID and CREATED
+        the CREATE transition parse the JSON daq configuration specified in the transition zdaq::fsmmessage,
+        the application identifies itself ans set its paramaters
+        - a virtual method userCreate to add additional work during CREATE transition
+        - A parameter set 
+    \author    Laurent Mirabito
+    \version   1.0
+    \date      January 2019
+    \copyright GNU Public License.
+  */
     class publishedItem {
     public:
       publishedItem(std::string address, zmq::context_t &c);
