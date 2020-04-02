@@ -211,6 +211,22 @@ def executeCMD(host,port,prefix,cmd,params):
        else:
            return r1.read()
     
+def executeRequest(surl):
+    """
+     Acces to an url
+
+    :param surl: The url
+    :return: url answer
+    """
+    req=urllib2.Request(surl)
+    try:
+        r1=urllib2.urlopen(req)
+    except URLError, e:
+        p_rep={}
+        p_rep["STATE"]="DEAD"
+        return json.dumps(p_rep,sort_keys=True)
+
+    return r1.read()
 
 #
 # Check the configuration
@@ -297,6 +313,7 @@ class RCClient:
             self.p_conf=read_conf["content"]
         else:
             self.p_conf=read_conf
+        return
     dm=os.getenv("DAQFILE","NONE")
     print dm
     if (dm!="NONE"):
@@ -304,7 +321,25 @@ class RCClient:
         with open(dm) as data_file:    
             self.p_conf = json.load(data_file)
             print self.p_conf
+        return
+    dm=os.getenv("DAQMONGO","NONE")
+    if (dm!="NONE"):
+        sa=mg.instance()
+        cn=dm.split(":")[0]
+        cv=dm.split(":")[1]
+        sa.downloadConfig(cn,int(cv),True)
+        self.daq_mongo=dm
+        daq_file="/dev/shm/mgjob/"+cn+"_"+cv+".json"
+        with open(daq_file) as data_file:    
+            self.p_conf = json.load(data_file)
+        return
   def jc_create(self):
+    """
+    Loop on all computers defined in the configuration and initialise their job control
+    with the loaded configuration
+
+    :return: Dictionnary of answer to INITIALISE transition
+    """  
     lcgi={}
     if (self.daq_url!=None):
         lcgi["url"]=self.daq_url
@@ -313,14 +348,23 @@ class RCClient:
     else:
         if (self.daq_file!=None):
             lcgi["file"]=self.daq_file
+        else:
+            if (self.daq_mongo!=None):
+                lcgi["mongo"]=self.daq_mongo
     rep={}
     for x,y in self.p_conf["HOSTS"].iteritems():
         #print x,"  found"
         sr=executeFSM(x,9999,"LJC-%s" % x,"INITIALISE",lcgi)
-    rep[x]=json.loads(sr)
+        rep[x]=json.loads(sr)
     return json.dumps(rep)
             
   def jc_start(self):
+    """
+    Loop on all computers defined in the configuration and start the process defined with the loaded configuration
+
+    :return: Dictionnary of answer to START transition
+    """  
+
     lcgi={}
     rep={}
     for x,y in self.p_conf["HOSTS"].iteritems():
@@ -328,15 +372,28 @@ class RCClient:
         sr=executeFSM(x,9999,"LJC-%s" % x,"START",lcgi)
         rep[x]=json.loads(sr)
     return json.dumps(rep)
+
   def jc_kill(self):
+    """
+    Loop on all computers defined in the configuration and kill the process defined
+    with the loaded configuration
+
+    :return: Dictionnary of answer to KILL transition
+    """
     lcgi={}
     rep={}
     for x,y in self.p_conf["HOSTS"].iteritems():
         #print x," found"
         sr=executeFSM(x,9999,"LJC-%s" % x,"KILL",lcgi)
         rep[x]= json.loads(sr)
-    return json.dumps(rep)        
+    return json.dumps(rep)
+
   def jc_destroy(self):
+    """
+    Loop on all computers defined in the configuration and clean the loaded configuration
+
+    :return: Dictionnary of answer to DESTROY transition
+    """
     lcgi={}
     rep={}
     for x,y in self.p_conf["HOSTS"].iteritems():
@@ -345,27 +402,192 @@ class RCClient:
         rep[x]= json.loads(sr)
     return json.dumps(rep)  
 
-  def jc_status(self):
-    lcgi={}
+  def jc_appcreate(self):
+    """
+    Loop on all computers defined in the configuration and send an APPCREATE Command, it sends a transition CREATE to all baseApplication
 
+    :return: Dictionnary of answer to APPCREATE command
+    """
+    lcgi={}
+    rep={}
     for x,y in self.p_conf["HOSTS"].iteritems():
-        #print "HOST ",x
-        
-        sr=executeCMD(x,9999,"LJC-%s" % x,"STATUS",lcgi)
+        #print x,"  found"
+        sr=executeCMD(x,9999,"LJC-%s" % x,"APPCREATE",lcgi)
+        rep[x]=json.loads(sr)
+    return json.dumps(rep)
+
+  def jc_info(self,hostname,apname=None):
+    """
+    Pretty print of processes status and application settings
+
+    :param hostanem: Host name where the jobcontrol is running
+    :param appname: Application name , if None all application are dumped
+    """
+    lcgi={}
+    resum={}
+    rep=""
+    for xh in [hostname]:
+        #print "== HOST:  ==",xh
+        rep = rep+ "== HOST: %s  == \n" % xh
+        resum[xh]=[]
+        sr=executeCMD(xh,9999,"LJC-%s" % xh,"STATUS",lcgi)
         sj=json.loads(sr)
-        #print "ON A ",sj
+        #print "== Acquisition %s ===\n \n == Processus ==\n" % sj['answer']['NAME']
+        rep=rep+"== Acquisition %s ===\n \n == Processus ==\n" % sj['answer']['NAME']
         ssj=sj["answer"]["JOBS"]
-        rep=""
+
         if (ssj != None):
-        #print "\033[1m %6s %15s %25s %20s \033[0m" % ('PID','NAME','HOST','STATUS')
+            #print "== %6s %15s %25s %20s %20s ==" % ('PID','NAME','HOST','STATUS','PORT')
+            rep=rep+"== %6s %15s %25s %20s %20s ==\n" % ('PID','NAME','HOST','STATUS','PORT')
             for x in ssj:
-                print x
-                print "%6d %15s %25s %20s" % (x['PID'],x['NAME'],x['HOST'],x['STATUS'])
-                rep =rep + "%6d %15s %25s %20s\n" % (x['PID'],x['NAME'],x['HOST'],x['STATUS'])
+                #print x
+                if (apname!=None and x['NAME']!=apname):
+                    continue
+
+                if ('PORT' in x):
+                    srcmd=executeRequest("http://%s:%s/" % (x['HOST'],x['PORT']))
+                    sjcmd=json.loads(srcmd)
+                    #print sjcmd
+                    resum[xh].append([x,sjcmd])
+                else:
+                    x['PORT']="0"
+                #print "%6d %15s %25s %20s %20s " % (x['PID'],x['NAME'],x['HOST'],x['STATUS'],x['PORT'])
+                rep =rep + "%6d %15s %25s %20s %20s\n" % (x['PID'],x['NAME'],x['HOST'],x['STATUS'],x['PORT'])
+        else:
+            rep=rep+"No Jobs"
+    #print "== List of Applications  =="
+    rep=rep+ "== List of Applications  ==\n"
+    for xh,y in resum.iteritems():
+        for x in y:
+            # Dead process or non ZDAQ
+            if ('PREFIX' not in x[1]):
+                #print "================================================= \n == %s   running on %s PID %s is  %s == \n ==========================================\n " % (x[0]['NAME'],x[0]['HOST'],x[0]['PID'],x[0]['STATUS'])
+                rep=rep+"================================================= \n == %s   running on %s PID %s is  %s == \n ==========================================\n " % (x[0]['NAME'],x[0]['HOST'],x[0]['PID'],x[0]['STATUS'])
+                continue
+            # normal process
+            #print "== %s :== http://%s:%s/%s/ on %s status %s" % (x[0]['NAME'],x[0]['HOST'],x[0]['PORT'],x[1]['PREFIX'],x[0]['PID'],x[0]['STATUS'])
+            rep=rep+"== %s :== http://%s:%s/%s/ on %s status %s\n" % (x[0]['NAME'],x[0]['HOST'],x[0]['PORT'],x[1]['PREFIX'],x[0]['PID'],x[0]['STATUS'])
+            #print "\t == STATE :==",x[1]['STATE']
+            rep=rep+"\t == STATE : %s == \n" % x[1]['STATE']
+            rep=rep+ "\t == FSM :== "
+            for z in x[1]['FSM']:
+                rep=rep+" "+z['name']
+            rep=rep+"\n"
+            rep=rep+"\t == ALLOWED :== "
+            for z in x[1]['ALLOWED']:
+                rep=rep+" "+z['name']
+            rep=rep+"\n"
+            rep=rep+"\t == COMMAND :=="
+            for z in x[1]['CMD']:
+                rep=rep+" "+z['name']
+            rep=rep+"\n"
+            #print "\t == FSM PARAMETERS :=="
+            rep=rep+"\t == FSM PARAMETERS :== \n"
+            for z in x[1]['CMD']:
+                if (z['name'] != "GETPARAM"):
+                    continue
+                srcmd1=executeRequest("http://%s:%s/%s/CMD?name=GETPARAM" % (x[0]['HOST'],x[0]['PORT'],x[1]['PREFIX']))
+                sjcmd1=json.loads(srcmd1)
+                #print sjcmd1
+                if ('PARAMETER' in sjcmd1['answer']):
+                    for xp,vp in sjcmd1['answer']['PARAMETER'].iteritems():
+                        #print "\t \t  == %s : == %s " % (xp,vp)
+                        rep=rep+ "\t \t  == %s : == %s \n" % (xp,vp)
+            
+    print rep
+    return rep
+
+  def jc_status(self,apname=None):
+    """
+    Pretty print of the status  of all process and application informations defined in the configuration
+
+    :param appname: if set , only this application name is dump
+    """
+    lcgi={}
+    resum={}
+    rep=""
+    for xh,y in self.p_conf["HOSTS"].iteritems():
+      rep=rep+self.jc_info(xh,apname)
+    return rep
+
+  def jc_oldstatus(self,apname=None):
+    """
+    Same as jc_status 
+
+    :obsolete: use jc_status instead
+    """
+    lcgi={}
+    resum={}
+    rep=""
+    for xh,y in self.p_conf["HOSTS"].iteritems():
+        print "== HOST:  ==",xh
+        resum[xh]=[]
+        sr=executeCMD(xh,9999,"LJC-%s" % xh,"STATUS",lcgi)
+        sj=json.loads(sr)
+        print "== Acquisition %s \n \n Processus \n==" % sj['answer']['NAME']
+        ssj=sj["answer"]["JOBS"]
+
+        if (ssj != None):
+            print "== %6s %15s %25s %20s %20s ==" % ('PID','NAME','HOST','STATUS','PORT')
+            for x in ssj:
+                #print x
+                if (apname!=None and x['NAME']!=apname):
+                    continue
+                if ('PORT' in x):
+                    srcmd=executeRequest("http://%s:%s/" % (x['HOST'],x['PORT']))
+                    sjcmd=json.loads(srcmd)
+                    #print sjcmd
+                    resum[xh].append([x,sjcmd])
+                else:
+                    x['PORT']="0"
+                print "%6d %15s %25s %20s %20s " % (x['PID'],x['NAME'],x['HOST'],x['STATUS'],x['PORT'])
+                rep =rep + "%6d %15s %25s %20s %20s\n" % (x['PID'],x['NAME'],x['HOST'],x['STATUS'],x['PORT'])
         else:
             rep="No Jobs"
+    print "== List of Applications  ==" 
+    for xh,y in resum.iteritems():
+        for x in y:
+            # Dead process or non ZDAQ
+            if ('PREFIX' not in x[1]):
+                print "================================================= \n == %s   running on %s PID %s is  %s == \n ==========================================\n " % (x[0]['NAME'],x[0]['HOST'],x[0]['PID'],x[0]['STATUS'])
+                continue
+            # normal process
+            print "== %s :== http://%s:%s/%s/ on %s status %s" % (x[0]['NAME'],x[0]['HOST'],x[0]['PORT'],x[1]['PREFIX'],x[0]['PID'],x[0]['STATUS'])
+            print "\t == STATE :==",x[1]['STATE']
+            rep="\t == FSM :=="
+            for z in x[1]['FSM']:
+                rep=rep+" "+z['name']
+            print rep
+            rep="\t == ALLOWED :=="
+            for z in x[1]['ALLOWED']:
+                rep=rep+" "+z['name']
+            print rep
+            rep="\t == COMMAND :=="
+            for z in x[1]['CMD']:
+                rep=rep+" "+z['name']
+            print rep
+            print "\t == FSM PARAMETERS :=="
+            for z in x[1]['CMD']:
+                if (z['name'] != "GETPARAM"):
+                    continue
+                srcmd1=executeRequest("http://%s:%s/%s/CMD?name=GETPARAM" % (x[0]['HOST'],x[0]['PORT'],x[1]['PREFIX']))
+                sjcmd1=json.loads(srcmd1)
+                #print sjcmd1
+                if ('PARAMETER' in sjcmd1['answer']):
+                    for xp,vp in sjcmd1['answer']['PARAMETER'].iteritems():
+                        print "\t \t  == %s : == %s " % (xp,vp)
+            
+
     return rep
+
   def jc_restart(self,host,jobname,jobpid):
+    """
+    Kill and restart one process
+
+    :param host: Host name
+    :param jobname: Name of the process in the job control
+    :param pid: Process id
+    """
     lcgi={}
     lcgi["processname"]=jobname
     lcgi["pid"]=jobpid

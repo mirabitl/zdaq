@@ -13,13 +13,17 @@ zdaq::example::softTrigger::softTrigger(std::string name) : zdaq::baseApplicatio
   _fsm->addState("CREATED");
   _fsm->addState("CONFIGURED");
   _fsm->addState("RUNNING");
+
+  // Register transition
   _fsm->addTransition("CONFIGURE","CREATED","CONFIGURED",boost::bind(&zdaq::example::softTrigger::configure, this,_1));
   _fsm->addTransition("CONFIGURE","CONFIGURED","CONFIGURED",boost::bind(&zdaq::example::softTrigger::configure, this,_1));
   _fsm->addTransition("START","CONFIGURED","RUNNING",boost::bind(&zdaq::example::softTrigger::start, this,_1));
   _fsm->addTransition("STOP","RUNNING","CONFIGURED",boost::bind(&zdaq::example::softTrigger::stop, this,_1));
   _fsm->addTransition("HALT","RUNNING","CREATED",boost::bind(&zdaq::example::softTrigger::halt, this,_1));
   _fsm->addTransition("HALT","CONFIGURED","CREATED",boost::bind(&zdaq::example::softTrigger::halt, this,_1));
-  
+
+
+  // Register standalone commands
   _fsm->addCommand("STATUS",boost::bind(&zdaq::example::softTrigger::c_status, this,_1,_2));
   _fsm->addCommand("PERIOD",boost::bind(&zdaq::example::softTrigger::c_period, this,_1,_2));
   _fsm->addCommand("SIZE",boost::bind(&zdaq::example::softTrigger::c_size, this,_1,_2));
@@ -30,13 +34,16 @@ zdaq::example::softTrigger::softTrigger(std::string name) : zdaq::baseApplicatio
   char* wp=getenv("WEBPORT");
   if (wp!=NULL)
     {
-      std::cout<<"Service "<<name<<" started on port "<<atoi(wp)<<std::endl;
+      LOG4CXX_INFO(_logZdaqex,"Service "<<name<<" started on port "<<atoi(wp));
       this->fsm()->start(atoi(wp));
     }
   _context=new zmq::context_t();
   _triggerPublisher=NULL;
 }
-
+/**
+ * \brief Configuration, parameters are either comming from the configuration or 
+ *  from the configuration messages
+ */
 void zdaq::example::softTrigger::configure(zdaq::fsmmessage* m)
 {
   
@@ -65,12 +72,13 @@ void zdaq::example::softTrigger::configure(zdaq::fsmmessage* m)
   _tcpPort=this->parameters()["tcpPort"].asUInt();
   _datasize=this->parameters()["datasize"].asUInt();
 
+  // Create the publisher
   if (_triggerPublisher==NULL)
     _triggerPublisher = new  zdaq::mon::zPublisher(_hardware,_location,_tcpPort,_context); 
    
 }
 /**
- * Thread process per zmPusher
+ * Return the current status of the event number,bx,datasize and period
  */
 Json::Value zdaq::example::softTrigger::status()
 {
@@ -83,7 +91,9 @@ Json::Value zdaq::example::softTrigger::status()
   r["period"]=_microsleep;
   return r;
 }
-
+/**
+ * Publishing thread, the event number and bx are periodically updated and the staus published
+ */
 void zdaq::example::softTrigger::publishingThread()
 {
   _event=0;
@@ -99,11 +109,11 @@ void zdaq::example::softTrigger::publishingThread()
     }
 }
 /**
- * Transition from CONFIGURED to RUNNING, starts one thread per data source
+ * Transition from CONFIGURED to RUNNING, starts one thread to publish
  */
 void zdaq::example::softTrigger::start(zdaq::fsmmessage* m)
 {
-  std::cout<<"Received "<<m->command()<<std::endl;
+  LOG4CXX_INFO(_logZdaqex,"Received "<<m->command());
   _event=0;
   _running=true;
   
@@ -111,19 +121,19 @@ void zdaq::example::softTrigger::start(zdaq::fsmmessage* m)
     
 }
 /**
- * RUNNING to CONFIGURED, Stop threads 
+ * RUNNING to CONFIGURED, Stop the publishing thread
  */
 void zdaq::example::softTrigger::stop(zdaq::fsmmessage* m)
 {
   
   
-  std::cout<<"Received "<<m->command()<<std::endl;
+  LOG4CXX_INFO(_logZdaqex,"Received "<<m->command());
   
   // Stop running
   _running=false;
   ::sleep(1);
 
-  std::cout<<"joining"<<std::endl;
+  LOG4CXX_INFO(_logZdaqex,"joining");
   
   _gthr.join_all();
    
@@ -135,10 +145,10 @@ void zdaq::example::softTrigger::halt(zdaq::fsmmessage* m)
 {
   
   
-  std::cout<<"Received "<<m->command()<<std::endl;
+  LOG4CXX_INFO(_logZdaqex,"Received "<<m->command());
   if (_running)
     this->stop(m);
-  std::cout<<"Destroying"<<std::endl;
+  LOG4CXX_INFO(_logZdaqex,"Destroying");
   //stop data sources
   _bx=0;
   if (_triggerPublisher!=NULL) delete _triggerPublisher;
@@ -150,22 +160,31 @@ void zdaq::example::softTrigger::halt(zdaq::fsmmessage* m)
  */
 void zdaq::example::softTrigger::c_status(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
-  std::cout<<"list"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData()<<std::endl;
+  LOG4CXX_INFO(_logZdaqex,"list"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData());
   response["answer"]=this->status();
 
 }
+/**
+ * Change the period of publication
+ */
 void zdaq::example::softTrigger::c_period(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
-  std::cout<<"list"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData()<<std::endl;
+  LOG4CXX_INFO(_logZdaqex,"list"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData());
   uint32_t period=atoi(request.get("period","1000000").c_str());
   _microsleep=period;
     
   response["answer"]=this->status();
 
 }
+
+/**
+ * Change the data size request, 0 is random on exServer side
+ */
+
+
 void zdaq::example::softTrigger::c_size(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
-  std::cout<<"list"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData()<<std::endl;
+  LOG4CXX_INFO(_logZdaqex,"list"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData());
   uint32_t psize=atoi(request.get("size","32").c_str());
   _datasize=psize;
     

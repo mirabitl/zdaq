@@ -5,12 +5,17 @@ using namespace zdaq::example;
 
 zdaq::example::exBuilder::exBuilder(std::string name) : zdaq::baseApplication(name),_running(false),_merger(NULL)
 {
+  // Create the context and the merger
   _context = new zmq::context_t (1);
   _merger= new zdaq::zmMerger(_context);
+
+  
   // Register state
   this->fsm()->addState("CREATED");
   this->fsm()->addState("CONFIGURED");
   this->fsm()->addState("RUNNING");
+
+  // Register transitions
   this->fsm()->addTransition("CONFIGURE","CREATED","CONFIGURED",boost::bind(&zdaq::example::exBuilder::configure, this,_1));
   this->fsm()->addTransition("CONFIGURE","CONFIGURED","CONFIGURED",boost::bind(&zdaq::example::exBuilder::configure, this,_1));
   this->fsm()->addTransition("START","CONFIGURED","RUNNING",boost::bind(&zdaq::example::exBuilder::start, this,_1));
@@ -18,6 +23,7 @@ zdaq::example::exBuilder::exBuilder(std::string name) : zdaq::baseApplication(na
   this->fsm()->addTransition("HALT","RUNNING","CREATED",boost::bind(&zdaq::example::exBuilder::halt, this,_1));
   this->fsm()->addTransition("HALT","CONFIGURED","CREATED",boost::bind(&zdaq::example::exBuilder::halt, this,_1));
 
+  // Standalone command
   this->fsm()->addCommand("STATUS",boost::bind(&zdaq::example::exBuilder::status, this,_1,_2));
   this->fsm()->addCommand("REGISTERDS",boost::bind(&zdaq::example::exBuilder::registerds, this,_1,_2));
   this->fsm()->addCommand("SETHEADER",boost::bind(&zdaq::example::exBuilder::c_setheader,this,_1,_2));
@@ -51,11 +57,13 @@ void zdaq::example::exBuilder::configure(zdaq::fsmmessage* m)
     { 
       this->parameters()["processor"]=m->content()["processor"];
     }
-  // Check that all paramters exists
-  if (!this->parameters().isMember("dsnumber")) {LOG4CXX_ERROR(_logZdaqex,"Missing dsnumber, number of data source");return;}
+  // Check that needed parameters exists
+
   if (!this->parameters().isMember("stream")) {LOG4CXX_ERROR(_logZdaqex,"Missing stream, list of data stream");return;}
   if (!this->parameters().isMember("processor")) {LOG4CXX_ERROR(_logZdaqex,"Missing processor, list of processing pluggins");return;}
 
+
+  // register data source and processors
   Json::Value jc=this->parameters();
   if (jc.isMember("dsnumber"))
     _merger->setNumberOfDataSource(jc["dsnumber"].asInt());
@@ -66,7 +74,7 @@ void zdaq::example::exBuilder::configure(zdaq::fsmmessage* m)
   for (Json::ValueConstIterator it = books.begin(); it != books.end(); ++it)
     {
       const Json::Value& book = *it;
-      LOG4CXX_INFO(_logZdaqex,__PRETTY_FUNCTION__<<"Registering "<<(*it).asString());
+      LOG4CXX_INFO(_logZdaqex,"Registering "<<(*it).asString());
       _merger->registerDataSource((*it).asString());
       
       array_keys.append((*it).asString());
@@ -77,12 +85,12 @@ void zdaq::example::exBuilder::configure(zdaq::fsmmessage* m)
   for (Json::ValueConstIterator it = pbooks.begin(); it != pbooks.end(); ++it)
     {
       const Json::Value& book = *it;
-      LOG4CXX_INFO(_logZdaqex,__PRETTY_FUNCTION__<<"registering "<<(*it).asString());
+      LOG4CXX_INFO(_logZdaqex,"registering "<<(*it).asString());
       _merger->registerProcessor((*it).asString());
       parray_keys.append((*it).asString());
     }
 
-  LOG4CXX_INFO(_logZdaqex,__PRETTY_FUNCTION__<<" Setting parameters for processors and merger ");
+  LOG4CXX_INFO(_logZdaqex," Setting parameters for processors and merger ");
   _merger->loadParameters(jc);
   // Overwrite msg
   //Prepare complex answer
@@ -91,34 +99,35 @@ void zdaq::example::exBuilder::configure(zdaq::fsmmessage* m)
   prep["processorRegistered"]=parray_keys;
        
   m->setAnswer(prep);
-  LOG4CXX_DEBUG(_logZdaqex,__PRETTY_FUNCTION__<<"end of configure");
+  LOG4CXX_DEBUG(_logZdaqex,"end of configure");
   return;
 }
 
 void zdaq::example::exBuilder::start(zdaq::fsmmessage* m)
 {
-
+  LOG4CXX_INFO(_logZdaqex,"Received "<<m->command()<<" Value "<<m->value());
   Json::Value jc=m->content();
   _merger->start(jc["run"].asInt());
   _running=true;
 
-  LOG4CXX_INFO(_logZdaqex,__PRETTY_FUNCTION__<<"Run "<<jc["run"].asInt()<<" is started ");
+  LOG4CXX_INFO(_logZdaqex,"Run "<<jc["run"].asInt()<<" is started ");
 }
 void zdaq::example::exBuilder::stop(zdaq::fsmmessage* m)
 {
-  
+  LOG4CXX_INFO(_logZdaqex,"Received "<<m->command()<<" Value "<<m->value());
   _merger->stop();
   _running=false;
-  LOG4CXX_INFO(_logZdaqex,__PRETTY_FUNCTION__<<"Builder is stopped \n");fflush(stdout);
+  LOG4CXX_INFO(_logZdaqex,"Builder is stopped \n");fflush(stdout);
 }
 void zdaq::example::exBuilder::halt(zdaq::fsmmessage* m)
 {
   
   
-  LOG4CXX_INFO(_logZdaqex,__PRETTY_FUNCTION__<<"Received "<<m->command());
+  LOG4CXX_INFO(_logZdaqex,"Received "<<m->command());
   if (_running)
     this->stop(m);
-  std::cout<<"Destroying"<<std::endl;
+
+  LOG4CXX_INFO(_logZdaqex,"Destroying");
   //stop data sources
   _merger->clear();
 }
@@ -171,7 +180,7 @@ void zdaq::example::exBuilder::c_setheader(Mongoose::Request &request, Mongoose:
   if (!parsingSuccessful)
     {response["STATUS"]="Cannot parse header tag "; return;}
   const Json::Value& jdevs=jsta;
-  LOG4CXX_DEBUG(_logZdaqex,__PRETTY_FUNCTION__<<"Header "<<jdevs);
+  LOG4CXX_DEBUG(_logZdaqex,"Header "<<jdevs);
   std::vector<uint32_t>& v=_merger->runHeader();
   v.clear();
   for (Json::ValueConstIterator jt = jdevs.begin(); jt != jdevs.end(); ++jt)

@@ -17,8 +17,8 @@ namespace zdaq {
       void start(zdaq::fsmmessage* m);
       void stop(zdaq::fsmmessage* m);
       void halt(zdaq::fsmmessage* m);
-      void readdata(zdaq::zmPusher *ds);
-      void download(Mongoose::Request &request, Mongoose::JsonResponse &response);
+      void streamdata(zdaq::zmPusher *ds);
+      void generate(Mongoose::Request &request, Mongoose::JsonResponse &response);
       void status(Mongoose::Request &request, Mongoose::JsonResponse &response);
       void incrementEvent() {_event++;_bx++;}
       bool running(){return _running;}

@@ -6,7 +6,9 @@
 #include <boost/bind.hpp>
 
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
-
+#include <iostream>
+#include <sstream>
+#include <fstream>
 using namespace zdaq;
 using namespace zdaq::example;
 
@@ -68,7 +70,9 @@ void  exRunControl::userCreate(zdaq::fsmmessage* m)
     else
       if (m->content().isMember("file"))
 	_jConfigContent["file"]=m->content()["file"];
-
+     else
+      if (m->content().isMember("mongo"))
+	_jConfigContent["mongo"]=m->content()["mongo"];
     // Discover and send CREATE transition to all needed applications
     this->discover();
 }
@@ -256,7 +260,13 @@ void exRunControl::singlestop(fsmwebCaller* d)
 
 void exRunControl::initialise(zdaq::fsmmessage* m)
 {
-  // Configure CCC
+  // Configure the Event builder
+   if (_builderClient)
+    {
+      _builderClient->sendTransition("CONFIGURE");
+    }
+ 
+  // Initialise all data sources server
  
   LOG4CXX_DEBUG(_logZdaqex,__PRETTY_FUNCTION__<<"Nothing to do at initialise .... ");
 for (std::vector<fsmwebCaller*>::iterator it=_exServerClients.begin();it!=_exServerClients.end();it++)
@@ -273,18 +283,13 @@ for (std::vector<fsmwebCaller*>::iterator it=_exServerClients.begin();it!=_exSer
 void exRunControl::configure(zdaq::fsmmessage* m)
 {
   // Configure trigger
-  //std::cout<<m->content();
   if (_triggerClient)
     {
       _triggerClient->sendTransition("CONFIGURE");  
     }
- if (_builderClient)
-    {
-      _builderClient->sendTransition("CONFIGURE");
-    }
- 
 
-  // Configure server
+
+  // Configure exServer in //
   boost::thread_group g;
   for (std::vector<fsmwebCaller*>::iterator it=_exServerClients.begin();it!=_exServerClients.end();it++)
     {
@@ -299,24 +304,39 @@ void exRunControl::configure(zdaq::fsmmessage* m)
 void exRunControl::start(zdaq::fsmmessage* m)
 {
   // Get the new run number
- #ifdef INLYON
-  LOG4CXX_INFO(_logZdaqex,__PRETTY_FUNCTION__<<" calling for new runs from the web interface");
-      std::string url="https://ilcconfdb.ipnl.in2p3.fr/runid";
-      std::string jsconf=fsmwebCaller::curlQuery(url,this->login());
-      LOG4CXX_INFO(_logZdaqex,__PRETTY_FUNCTION__<<jsconf);
+
+
+  LOG4CXX_INFO(_logZdaqex,__PRETTY_FUNCTION__<<" calling for new runs from  the Mongo Db");
+  if (!_jConfigContent.isMember("mongo"))
+    {
+      _run=10000;
+    }
+  else
+    {
+      std::string comment="Not yet set";
+      if (m->content().isMember("comment"))
+	comment=m->content()["comment"].asString();
+      std::stringstream scmd;
+      scmd << "/bin/bash -c 'mgjob --new-run "<<" --comment=\""<<comment<<"\" --location=" <<this->parameters()["location"] <<"'";
+      std::cout<<scmd.str()<<std::endl;
+      int ier=system(scmd.str().c_str());
+      std::stringstream sname;
+      sname << "/dev/shm/mgjob/lastrun.json";
+      
+      fprintf(stderr, "Parsing the file %s\n", sname.str().c_str());
       Json::Reader reader;
       Json::Value jcc;
-      bool parsingSuccessful = reader.parse(jsconf,jcc);
-#else
-      Json::Value jcc=m->content();
-#endif
-      if (jcc.isMember("runid"))
-        _run=jcc["runid"].asUInt();
+      std::ifstream ifs(sname.str().c_str(), std::ifstream::in);
+      //      Json::Value _jall;
+      fprintf(stderr, "Before Parsing the file %s\n", sname.str().c_str());
+      bool parsingSuccessful = reader.parse(ifs, jcc, false);
+      ier=system("mv  /dev/shm/mgjob/lastrun.json /dev/shm/mgjob/lastrun.json.back");
+       if (jcc.isMember("run"))
+        _run=jcc["run"].asUInt();
       else
         _run=10000;
-
-      LOG4CXX_INFO(_logZdaqex,__PRETTY_FUNCTION__<<" new run "<<_run);
-  
+    }
+  LOG4CXX_INFO(_logZdaqex,__PRETTY_FUNCTION__<<" new run "<<_run);
   // Start the builder
    if (_builderClient)
     {
@@ -331,7 +351,7 @@ void exRunControl::start(zdaq::fsmmessage* m)
 
 
 
-   // Start the servers
+   // Start the servers 
   boost::thread_group g;
   for (std::vector<fsmwebCaller*>::iterator it=_exServerClients.begin();it!=_exServerClients.end();it++)
     {
@@ -361,7 +381,7 @@ void exRunControl::stop(zdaq::fsmmessage* m)
      }
 
     
-   // Stop the DIFs
+   // Stop the DIFs data source server
   boost::thread_group g;
   for (std::vector<fsmwebCaller*>::iterator it=_exServerClients.begin();it!=_exServerClients.end();it++)
     {

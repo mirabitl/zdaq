@@ -14,6 +14,8 @@ zdaq::example::exServer::exServer(std::string name) : zdaq::baseApplication(name
   _fsm->addState("INITIALISED");
   _fsm->addState("CONFIGURED");
   _fsm->addState("RUNNING");
+
+  // Register the transitions
   _fsm->addTransition("INITIALISE","CREATED","INITIALISED",boost::bind(&zdaq::example::exServer::initialise, this,_1));
   _fsm->addTransition("CONFIGURE","INITIALISED","CONFIGURED",boost::bind(&zdaq::example::exServer::configure, this,_1));
   _fsm->addTransition("CONFIGURE","CONFIGURED","CONFIGURED",boost::bind(&zdaq::example::exServer::configure, this,_1));
@@ -21,44 +23,49 @@ zdaq::example::exServer::exServer(std::string name) : zdaq::baseApplication(name
   _fsm->addTransition("STOP","RUNNING","CONFIGURED",boost::bind(&zdaq::example::exServer::stop, this,_1));
   _fsm->addTransition("HALT","RUNNING","INITIALISED",boost::bind(&zdaq::example::exServer::halt, this,_1));
   _fsm->addTransition("HALT","CONFIGURED","INITIALISED",boost::bind(&zdaq::example::exServer::halt, this,_1));
-  
-  _fsm->addCommand("DOWNLOAD",boost::bind(&zdaq::example::exServer::download, this,_1,_2));
+
+  // Register standalone commands
+  _fsm->addCommand("GENERATE",boost::bind(&zdaq::example::exServer::generate, this,_1,_2));
   _fsm->addCommand("STATUS",boost::bind(&zdaq::example::exServer::status, this,_1,_2));
   
   //Start server
   
-
   char* wp=getenv("WEBPORT");
   if (wp!=NULL)
     {
       std::cout<<"Service "<<name<<" started on port "<<atoi(wp)<<std::endl;
       this->fsm()->start(atoi(wp));
     }
+  // Initialise ZMQ 
   _context=new zmq::context_t();
+
+  // Subscribe to a software trigger provider
   _triggerSubscriber = new  zdaq::mon::zSubscriber(_context); 
   _triggerSubscriber->addHandler(boost::bind(&zdaq::example::exServer::checkTrigger, this,_1));
-  for (int i=1;i<0x20000;i++) _plrand[i]= std::rand();
+
 }
 void zdaq::example::exServer::initialise(zdaq::fsmmessage* m)
 {
   
-  LOG4CXX_INFO(_logZdaqex," Receiving: "<<m->command()<<" value:"<<m->value());
-  //this->autoDiscover();
+  LOG4CXX_DEBUG(_logZdaqex," Receiving: "<<m->command()<<" value:"<<m->value());
+  // Initialise random data packet
+  for (int i=1;i<0x20000;i++) _plrand[i]= std::rand();
 }
 void zdaq::example::exServer::configure(zdaq::fsmmessage* m)
 {
   
-  LOG4CXX_INFO(_logZdaqex," Receiving: "<<m->command()<<" value:"<<m->value());
-  // Delet existing zmPushers
+  LOG4CXX_DEBUG(_logZdaqex," Receiving: "<<m->command()<<" value:"<<m->value());
+  // Delete any  existing zmPushers
   for (std::vector<zdaq::zmPusher*>::iterator it=_sources.begin();it!=_sources.end();it++)
     delete (*it);
   _sources.clear();
   // Clear statistics
   _stat.clear();
-  // Add a data source
+  // Update information if any
   // Parse the json message
-  // {"command": "CONFIGURE", "content": {"detid": 100, "sourceid": [23, 24, 26]}}
-
+  // {"command": "CONFIGURE", "content": {"detid": 100, "sourceid": [23, 24, 26],....}}
+  // Informations arnormally already stored in the PARAMETER tag of the configurations but can be updated
+  
   if (m->content().isMember("detid"))
     { 
       this->parameters()["detid"]=m->content()["detid"];
@@ -88,7 +95,7 @@ void zdaq::example::exServer::configure(zdaq::fsmmessage* m)
     { 
       this->parameters()["compress"]=m->content()["compress"];
     }
-  // check parameters
+  // check parameters exist
   if (!this->parameters().isMember("detid")) {LOG4CXX_ERROR(_logZdaqex,"Missing detid");return;}
   if (!this->parameters().isMember("sourceid")) {LOG4CXX_ERROR(_logZdaqex,"Missing sourceid");return;}
   if (!this->parameters().isMember("pushdata")) {LOG4CXX_ERROR(_logZdaqex,"Missing pushdata address");return;}
@@ -96,28 +103,32 @@ void zdaq::example::exServer::configure(zdaq::fsmmessage* m)
   if (!this->parameters().isMember("paysize")) {LOG4CXX_ERROR(_logZdaqex,"Missing paysize payload size");return;}
   if (!this->parameters().isMember("mode")) {LOG4CXX_ERROR(_logZdaqex,"Missing mode TRIGGER/ALONE");return;}
 
+  // declare source and create zmPushers
   Json::Value jc=this->parameters();
   int32_t det=jc["detid"].asInt();
   _detid=det;
-  const Json::Value& books = jc["sourceid"];
+  const Json::Value& jsitems = jc["sourceid"];
   Json::Value array_keys;
-  for (Json::ValueConstIterator it = books.begin(); it != books.end(); ++it)
+  for (Json::ValueConstIterator it = jsitems.begin(); it != jsitems.end(); ++it)
     {
-      const Json::Value& book = *it;
+      const Json::Value& jsitem = *it;
       int32_t sid=(*it).asInt();
       // rest as before
       LOG4CXX_INFO(_logZdaqex,"Creating data source "<<det<<" "<<sid);
       array_keys.append((det<<16)|sid);
       zdaq::zmPusher* ds= new zdaq::zmPusher(_context,det,sid);
       ds->connect(this->parameters()["pushdata"].asString());
-
+      ds->collectorRegister();
+      
       if (this->parameters().isMember("compress"))
 	ds->setCompress(this->parameters()["compress"].asUInt()==1);
-      
+
       _sources.push_back(ds);
       _stat.insert(std::pair<uint32_t,uint32_t>((det<<16)|sid,0));
 	
     }
+
+  // Subscribe to the soft trigger source
   _triggerSubscriber->addStream(this->parameters()["trigsub"].asString());
   // Overwrite msg
   //Prepare complex answer
@@ -125,10 +136,11 @@ void zdaq::example::exServer::configure(zdaq::fsmmessage* m)
   
 }
 /**
- * Thread process per zmPusher
+ * Thread process per zmPusher: Fill and publish an event
  */
 void zdaq::example::exServer::fillEvent(uint32_t event,uint64_t bx,zdaq::zmPusher* ds,uint32_t eventSize)
 {
+  // randomize event size if not set
   if (eventSize==0)
     {
       eventSize=int(std::rand()*1.*0x20000/(RAND_MAX))-1;
@@ -137,8 +149,9 @@ void zdaq::example::exServer::fillEvent(uint32_t event,uint64_t bx,zdaq::zmPushe
     }
   // Payload address
   uint32_t* pld=(uint32_t*) ds->payload();
-  // Random data with tags at start and end of data payload 
-  for (int i=1;i<eventSize-1;i++) pld[i]= _plrand[i];
+  // Copy Random data with tags at start and end of data payload
+  memcpy(pld,_plrand,eventSize*sizeof(uint32_t));
+  //for (int i=1;i<eventSize-1;i++) pld[i]= _plrand[i];
   pld[0]=event;
   pld[eventSize-1]=event;
   // Publish the data source
@@ -149,8 +162,12 @@ void zdaq::example::exServer::fillEvent(uint32_t event,uint64_t bx,zdaq::zmPushe
     its->second=event;
 	
 }
+/**
+ * Soft trigger handler
+ */
 void zdaq::example::exServer::checkTrigger(std::vector<zdaq::mon::publishedItem*>& items)
 {
+  // In trigger mode, create fake events according to the message content and publish them
   if (this->parameters()["mode"].asString().compare("ALONE")!=0)
     for (auto x:items)
       if (x->hardware().compare("SoftTrigger")==0)
@@ -164,7 +181,10 @@ void zdaq::example::exServer::checkTrigger(std::vector<zdaq::mon::publishedItem*
 	    }
 	}
 }
-void zdaq::example::exServer::readdata(zdaq::zmPusher *ds)
+/**
+ * Standalone thread with no external trigger to publish continously data
+ */
+void zdaq::example::exServer::streamdata(zdaq::zmPusher *ds)
 {
   uint32_t last_evt=0;
   std::srand(std::time(0));
@@ -174,8 +194,7 @@ void zdaq::example::exServer::readdata(zdaq::zmPusher *ds)
       if (!_running) break;
       if (_event == last_evt) continue;
       if (_event%100==0)
-	std::cout<<"Thread of "<<ds->buffer()->dataSourceId()<<" is running "<<_event<<" events and status is "<<_running<<std::endl;
-
+	LOG4CXX_INFO(_logZdaqex," Thread of: "<<ds->buffer()->dataSourceId()<<" is running "<<_event<<" events and status is "<<_running);
       // Just fun 
       // Create a dummy buffer of fix length depending on source id and random data
       // 
@@ -185,10 +204,10 @@ void zdaq::example::exServer::readdata(zdaq::zmPusher *ds)
       _event++;
       _bx++;
     }
-  std::cout<<"Thread of "<<ds->buffer()->dataSourceId()<<" is exiting after "<<last_evt<<"events"<<std::endl;
+  LOG4CXX_INFO(_logZdaqex," Thread of: "<<ds->buffer()->dataSourceId()<<" is exiting after "<<last_evt<<"events");
 }
 /**
- * Transition from CONFIGURED to RUNNING, starts one thread per data source
+ * Transition from CONFIGURED to RUNNING, starts one thread per data source in standalone mode
  */
 void zdaq::example::exServer::start(zdaq::fsmmessage* m)
 {
@@ -197,20 +216,25 @@ void zdaq::example::exServer::start(zdaq::fsmmessage* m)
   _running=true;
   if (this->parameters()["mode"].asString().compare("ALONE")==0)
     {
+      // Standalone all datasources are publishing continously events of fixed size
       for (std::vector<zdaq::zmPusher*>::iterator ids=_sources.begin();ids!=_sources.end();ids++)
 	{
-	  (*ids)->collectorRegister();
-	  _gthr.create_thread(boost::bind(&zdaq::example::exServer::readdata, this,(*ids)));
+	  //(*ids)->collectorRegister();
+	  _gthr.create_thread(boost::bind(&zdaq::example::exServer::streamdata, this,(*ids)));
 	  ::usleep(500000);
 	}
     }
   else
     {
-      LOG4CXX_INFO(_logZdaqex,"Working in event handling mode");
-      for (std::vector<zdaq::zmPusher*>::iterator ids=_sources.begin();ids!=_sources.end();ids++)
-	{
-	  (*ids)->collectorRegister();
-	}
+      // Soft trigger mode, events are published when a trigger is received
+      LOG4CXX_INFO(_logZdaqex,"Working in trigger handling mode");
+      
+      // for (std::vector<zdaq::zmPusher*>::iterator ids=_sources.begin();ids!=_sources.end();ids++)
+      // 	{
+      // 	  (*ids)->collectorRegister();
+      // 	}
+
+      // start polling
       _triggerSubscriber->start();
     }
 }
@@ -251,13 +275,15 @@ void zdaq::example::exServer::halt(zdaq::fsmmessage* m)
 }
 
 /**
- * Standalone command DOWNLOAD, unused but it might be used to download data to 
+ * Standalone command GENERATE, unused but it might be used to generate data to 
  * configure the hardware
  */
-void zdaq::example::exServer::download(Mongoose::Request &request, Mongoose::JsonResponse &response)
+void zdaq::example::exServer::generate(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
   std::cout<<"download"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData()<<std::endl;
-  response["answer"]="download called to be implemented";
+    // Initialise random data packet
+  for (int i=1;i<0x20000;i++) _plrand[i]= std::rand();
+  response["answer"]="DONE";
 }
 /**
  * Standalone command LIST to get the statistics of each data source 
