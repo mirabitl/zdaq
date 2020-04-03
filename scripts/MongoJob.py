@@ -85,7 +85,7 @@ class MongoJob:
         for x in res:
             if ("comment" in x):
                 print time.ctime(x["time"]),x["location"],x["run"],x["comment"]
-                print x["time"],x["location"],x["run"],x["comment"]
+                #print x["time"],x["location"],x["run"],x["comment"]
     def runInfo(self,run,loc):
         """
         Eun info on a given run
