@@ -39,10 +39,6 @@ zdaq::example::exServer::exServer(std::string name) : zdaq::baseApplication(name
   // Initialise ZMQ 
   _context=new zmq::context_t();
 
-  // Subscribe to a software trigger provider
-  _triggerSubscriber = new  zdaq::mon::zSubscriber(_context); 
-  _triggerSubscriber->addHandler(boost::bind(&zdaq::example::exServer::checkTrigger, this,_1));
-
 }
 void zdaq::example::exServer::initialise(zdaq::fsmmessage* m)
 {
@@ -129,6 +125,11 @@ void zdaq::example::exServer::configure(zdaq::fsmmessage* m)
     }
 
   // Subscribe to the soft trigger source
+    // Subscribe to a software trigger provider
+   zmq::context_t* scontext=new zmq::context_t(1);
+  _triggerSubscriber = new  zdaq::mon::zSubscriber(scontext); 
+  _triggerSubscriber->addHandler(boost::bind(&zdaq::example::exServer::checkTrigger, this,_1));
+
   _triggerSubscriber->addStream(this->parameters()["trigsub"].asString());
   LOG4CXX_INFO(_logZdaqex," Subscribing: "<<this->parameters()["trigsub"].asString());
 

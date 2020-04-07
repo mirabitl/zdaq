@@ -37,7 +37,7 @@ zdaq::example::softTrigger::softTrigger(std::string name) : zdaq::baseApplicatio
       LOG4CXX_INFO(_logZdaqex,"Service "<<name<<" started on port "<<atoi(wp));
       this->fsm()->start(atoi(wp));
     }
-  _context=new zmq::context_t();
+  _context=new zmq::context_t(1);
   _triggerPublisher=NULL;
 }
 /**

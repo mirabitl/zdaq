@@ -9,6 +9,7 @@ using namespace zdaq;
 using namespace zdaq::mon;
 zdaq::mon::zPublisher::zPublisher(std::string hardware,std::string location,uint32_t tcp,zmq::context_t* c) : _hardware(hardware),_location(location),_tcpPort(tcp),_context(c)
 {
+ 
   _publisher= new zmq::socket_t((*_context), ZMQ_PUB);
   std::stringstream sport;
   sport<<"tcp://*:"<<_tcpPort;
