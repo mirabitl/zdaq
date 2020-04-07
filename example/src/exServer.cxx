@@ -130,6 +130,8 @@ void zdaq::example::exServer::configure(zdaq::fsmmessage* m)
 
   // Subscribe to the soft trigger source
   _triggerSubscriber->addStream(this->parameters()["trigsub"].asString());
+  LOG4CXX_INFO(_logZdaqex," Subscribing: "<<this->parameters()["trigsub"].asString());
+
   // Overwrite msg
   //Prepare complex answer
   m->setAnswer(array_keys);

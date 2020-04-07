@@ -66,8 +66,8 @@ void zdaq::mon::zSubscriber::addStream(std::string str)
 {
  
     LOG4CXX_INFO(_logZdaq," Registering stream: "<<str);
-	  zdaq::mon::publishedItem* item=new  zdaq::mon::publishedItem(str,(*_context));
-	  _items.push_back(item);
+    zdaq::mon::publishedItem* item=new  zdaq::mon::publishedItem(str,(*_context));
+    _items.push_back(item);
 	
   
 }
@@ -107,6 +107,8 @@ void zdaq::mon::zSubscriber::poll()
     }
   // Loop
   std::vector<std::string> strs;
+  std::string address,contents;
+  zmq::message_t* m= new zmq::message_t(512*1024);
   LOG4CXX_INFO(_logZdaq," Polling started: "<<_nItems);
     while (_running)
     {
@@ -117,30 +119,34 @@ void zdaq::mon::zSubscriber::poll()
       LOG4CXX_DEBUG(_logZdaq," Polling results: "<<rc);
       if (rc==0) continue;
       for (uint16_t i=0;i<_nItems;i++)
+	{
+	  LOG4CXX_DEBUG(_logZdaq," Polling results: ["<<i<<"]"<<_pollitems[i].revents);
         if (_pollitems[i].revents & ZMQ_POLLIN) {
 
-
-	        std::string address = s_recv (_items[i]->socket());
-
+	  address.clear();
+	  //address = s_recv (_items[i]->socket());
+	  _items[i]->socket().recv(m);
+	  std::cout<<"Message "<<(char*) m->data()<<" size is "<<m->size()<<std::endl;
+	   address.assign((char*) m->data(),m->size());
 	  // split address hardware@location@time
-	        strs.clear();
-	        boost::split(strs,address, boost::is_any_of("@"));
+	   strs.clear();
+	   boost::split(strs,address, boost::is_any_of("@"));
 	  //  Read message contents
-	        zmq::message_t message;
-	        _items[i]->socket().recv(&message);
+	   _items[i]->socket().recv(m);
 	  //std::cout<<"Message size is "<<message.size()<<std::endl;
 	  //char buffer[65536];
 
 
 	        std::string contents ;
 	        contents.clear();
-	        contents.assign((char*) message.data(),message.size());
+	        contents.assign((char*) m->data(),m->size());
 
 	        _items[i]->processData(address,contents);
 	  
-	  
+		std::cout<<"Message size is "<<m->size()<<" ADR: "<<address<<" CONT: "<<contents<<std::endl;
 
 	        }
+	}
             //call handlers
       for (auto x=_handlers.begin();x!=_handlers.end();x++)
             (*x)(_items);

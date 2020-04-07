@@ -32,52 +32,20 @@ namespace zdaq {
        *
        * \details the ZMQ_PUB socket is created and bind
        */
-      zPublisher(std::string hardware,std::string location,uint32_t tcp,zmq::context_t* c) : _hardware(hardware),_location(location),_tcpPort(tcp),_context(c)
-      {
-        _publisher= new zmq::socket_t((*_context), ZMQ_PUB);
-	std::stringstream sport;
-	sport<<"tcp://*:"<<_tcpPort;
-	std::cout<<"Binding to "<<sport.str()<<std::endl;
-	_publisher->bind(sport.str());
-      }
+      zPublisher(std::string hardware,std::string location,uint32_t tcp,zmq::context_t* c);
       /**
        * \brief Post the hardware status
        * \param status is the JSON value of the hardware status (free to the user)
        */
-      void post(Json::Value status)
-      {
-	Json::FastWriter fastWriter;
-     
-    
-	if (_publisher==NULL)
-	  {
-	    std::cout<<"No publisher defined"<<std::endl;
-	    return;
-	  }
-	// ID
-	std::stringstream sheader;
-	sheader<<this->hardware()<<"@"<<location()<<"@"<<time(0);
-	std::string head=sheader.str();
-    
-	zmq::message_t ma1((void*)head.c_str(), head.length(), NULL); 
-	_publisher->send(ma1, ZMQ_SNDMORE);
-	// Status
-	Json::Value jstatus=status;
-	std::string scont= fastWriter.write(jstatus);
-	zmq::message_t ma2((void*)scont.c_str(), scont.length(), NULL); 
-
-	std::cout<<"publishing "<<head<<" =>"<<scont<<std::endl;
-	_publisher->send(ma2);
-	 
-      }
+      void post(Json::Value status);
       /**
        * \brief Hardware name
        */
-      std::string hardware(){return _hardware;}
+      std::string const hardware();
       /**
        * \brief Setup/experiment name
        */
-      std::string location() {return _location;}
+      std::string const location();
     protected:
       std::string _hardware,_location;
       uint32_t _tcpPort;

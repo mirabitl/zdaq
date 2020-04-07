@@ -10,6 +10,7 @@ import base64
 import time
 import argparse
 import requests
+import MongoJob as mg
 
 sockport=None
 sp=os.getenv("SOCKPORT","Not Found")
@@ -604,6 +605,9 @@ class RCClient:
       else:
           if (self.daq_file!=None):
               lcgi["file"]=self.daq_file
+          else:
+              if (self.daq_mongo!=None):
+                  lcgi["mongo"]=self.daq_mongo
       for x,y in self.p_conf["HOSTS"].iteritems():
           for p in y:
               if (p["NAME"] != "RUNCONTROL"):

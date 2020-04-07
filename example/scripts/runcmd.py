@@ -12,7 +12,7 @@ import base64
 import time
 import argparse
 import requests
-import daqcontrol as dqc
+import runcontrol as dqc
 import sys
 
 parser = argparse.ArgumentParser()
@@ -270,7 +270,7 @@ elif(results.daq_destroy):
     exit(0)
 elif(results.daq_evbstatus):
     r_cmd = 'shmStatus'
-    sr = fdc.daq_evbstatus()
+    sr = fdc.daq_evb_status()
     if (results.verbose):
         print sr
     else:

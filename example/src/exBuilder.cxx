@@ -6,7 +6,7 @@ using namespace zdaq::example;
 zdaq::example::exBuilder::exBuilder(std::string name) : zdaq::baseApplication(name),_running(false),_merger(NULL)
 {
   // Create the context and the merger
-  _context = new zmq::context_t (1);
+  _context = new zmq::context_t ();
   _merger= new zdaq::zmMerger(_context);
 
   

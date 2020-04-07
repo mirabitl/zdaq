@@ -71,11 +71,17 @@ void zdaq::example::softTrigger::configure(zdaq::fsmmessage* m)
   _microsleep=this->parameters()["microsleep"].asUInt();
   _tcpPort=this->parameters()["tcpPort"].asUInt();
   _datasize=this->parameters()["datasize"].asUInt();
-
+  if (this->parameters().isMember("location"))
+    _location=this->parameters()["location"].asString();
+  if (this->parameters().isMember("hardware"))
+    _hardware=this->parameters()["hardware"].asString();
   // Create the publisher
   if (_triggerPublisher==NULL)
-    _triggerPublisher = new  zdaq::mon::zPublisher(_hardware,_location,_tcpPort,_context); 
-   
+    {
+    _triggerPublisher = new  zdaq::mon::zPublisher(_hardware,_location,_tcpPort,_context);
+
+    LOG4CXX_INFO(_logZdaqex,"Publisher created: "<<_hardware<<" "<<_location<<" "<<_tcpPort);
+    }
 }
 /**
  * Return the current status of the event number,bx,datasize and period
