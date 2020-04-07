@@ -127,6 +127,12 @@ void zdaq::mon::zSubscriber::poll()
 	  //address = s_recv (_items[i]->socket());
 	  _items[i]->socket().recv(m);
 	  std::cout<<"Message "<<(char*) m->data()<<" size is "<<m->size()<<std::endl;
+	  for (int i=0;i<m->size();i++)
+	    fprintf(stderr,"%.2x ",((uint8_t*)m->data())[i]);
+	  fprintf(stderr,"\n==>\n");
+	  for (int i=0;i<m->size();i++)
+	    fprintf(stderr,"%c ",((uint8_t*)m->data())[i]);
+	  fprintf(stderr,"\n==>\n");
 	   address.assign((char*) m->data(),m->size());
 	  // split address hardware@location@time
 	   strs.clear();
