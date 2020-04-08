@@ -131,6 +131,7 @@ void zdaq::example::exServer::configure(zdaq::fsmmessage* m)
   _triggerSubscriber->addHandler(boost::bind(&zdaq::example::exServer::checkTrigger, this,_1));
 
   _triggerSubscriber->addStream(this->parameters()["trigsub"].asString());
+
   LOG4CXX_INFO(_logZdaqex," Subscribing: "<<this->parameters()["trigsub"].asString());
 
   // Overwrite msg
