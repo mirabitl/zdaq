@@ -109,7 +109,7 @@ void zdaq::example::softTrigger::publishingThread()
       if (!_running) break;
 	
       _triggerPublisher->post(this->status());
-	
+      
       _event++;
       _bx++;
     }
@@ -176,7 +176,7 @@ void zdaq::example::softTrigger::c_status(Mongoose::Request &request, Mongoose::
 void zdaq::example::softTrigger::c_period(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
   LOG4CXX_INFO(_logZdaqex,"list"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData());
-  uint32_t period=atoi(request.get("period","1000000").c_str());
+  uint32_t period=atoi(request.get("value","1000000").c_str());
   _microsleep=period;
     
   response["answer"]=this->status();
@@ -191,7 +191,7 @@ void zdaq::example::softTrigger::c_period(Mongoose::Request &request, Mongoose::
 void zdaq::example::softTrigger::c_size(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
   LOG4CXX_INFO(_logZdaqex,"list"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData());
-  uint32_t psize=atoi(request.get("size","32").c_str());
+  uint32_t psize=atoi(request.get("value","32").c_str());
   _datasize=psize;
     
   response["answer"]=this->status();

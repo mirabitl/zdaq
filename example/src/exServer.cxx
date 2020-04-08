@@ -174,11 +174,13 @@ void zdaq::example::exServer::checkTrigger(std::vector<zdaq::mon::publishedItem*
   // In trigger mode, create fake events according to the message content and publish them
   if (this->parameters()["mode"].asString().compare("ALONE")!=0)
     for (auto x:items)
-      if (x->hardware().compare("SoftTrigger")==0)
+      if (x->hardware().compare("DUMMYTRIGGER")==0)
 	{
+	  
 	  _event=x->status()["event"].asUInt();
 	  _bx=x->status()["bxid"].asUInt64();
 	  uint32_t psi=x->status()["size"].asUInt();
+	  std::cout<<" New event "<<_event<<" "<<_bx<<" "<<psi<<std::endl;
 	  for (std::vector<zdaq::zmPusher*>::iterator ids=_sources.begin();ids!=_sources.end();ids++)
 	    {
 	      this->fillEvent(_event,_bx,(*ids),psi);

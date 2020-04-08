@@ -261,7 +261,7 @@ elif(results.daq_startrun):
 
 elif(results.daq_stoprun):
     r_cmd = 'stop'
-    fdc.trig_pause()
+
     fdc.daq_stop()
     exit(0)
 elif(results.daq_destroy):
