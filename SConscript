@@ -148,6 +148,8 @@ EXE_LIBS.append("zdaq")
 
 plugbase=env.SharedLibrary("lib/binarywriter",source="src/pluggins/binarywriter.cc",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 
+dumbase=env.SharedLibrary("lib/dummywriter",source="src/pluggins/dummywriter.cc",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+
 plist=[]
 mpub=env.Program("bin/mpubserver",source="src/mpubserver.cpp",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 plist.append(mpub)

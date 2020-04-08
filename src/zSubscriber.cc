@@ -112,20 +112,21 @@ void zdaq::mon::zSubscriber::poll()
   LOG4CXX_INFO(_logZdaq," Polling started: "<<_nItems);
     while (_running)
     {
-      LOG4CXX_DEBUG(_logZdaq," Polling loop: "<<_nItems);
+      //LOG4CXX_DEBUG(_logZdaq," Polling loop: "<<_nItems);
 
       rc=zmq::poll (&_pollitems [0], _nItems, 3000);
 
-      LOG4CXX_DEBUG(_logZdaq," Polling results: "<<rc);
+      //LOG4CXX_DEBUG(_logZdaq," Polling results: "<<rc);
       if (rc==0) continue;
       for (uint16_t i=0;i<_nItems;i++)
 	{
-	  LOG4CXX_DEBUG(_logZdaq," Polling results: ["<<i<<"]"<<_pollitems[i].revents);
+	  //  LOG4CXX_DEBUG(_logZdaq," Polling results: ["<<i<<"]"<<_pollitems[i].revents);
         if (_pollitems[i].revents & ZMQ_POLLIN) {
 
 	  address.clear();
 	  //address = s_recv (_items[i]->socket());
 	  _items[i]->socket().recv(m);
+	  /*
 	  std::cout<<"Message "<<(char*) m->data()<<" size is "<<m->size()<<std::endl;
 	  for (int i=0;i<m->size();i++)
 	    fprintf(stderr,"%.2x ",((uint8_t*)m->data())[i]);
@@ -133,6 +134,7 @@ void zdaq::mon::zSubscriber::poll()
 	  for (int i=0;i<m->size();i++)
 	    fprintf(stderr,"%c ",((uint8_t*)m->data())[i]);
 	  fprintf(stderr,"\n==>\n");
+	  */
 	   address.assign((char*) m->data(),m->size());
 	  // split address hardware@location@time
 	   strs.clear();
@@ -149,7 +151,7 @@ void zdaq::mon::zSubscriber::poll()
 
 	        _items[i]->processData(address,contents);
 	  
-		std::cout<<"Message size is "<<m->size()<<" ADR: "<<address<<" CONT: "<<contents<<std::endl;
+		//std::cout<<"Message size is "<<m->size()<<" ADR: "<<address<<" CONT: "<<contents<<std::endl;
 
 	        }
 	}
