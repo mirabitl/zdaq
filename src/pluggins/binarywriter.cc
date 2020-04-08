@@ -88,7 +88,7 @@ void binarywriter::processEvent(uint32_t key,std::vector<zdaq::buffer*> vbuf)
 
   if (!_started) return;
   uint32_t theNumberOfDIF=vbuf.size();
-  if (_event%100==0) 
+  //if (_event%100==0) 
     std::cout<<"Standard completion "<<_event<<" GTC "<<key<<" size "<<_totalSize<<std::endl;
   // To be implemented
   //printf("Event %d key %d writing TotalSize %d :\n",_event,key,_totalSize);fflush(stdout);

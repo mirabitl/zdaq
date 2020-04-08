@@ -31,16 +31,22 @@ void zdaq::mon::zPublisher::post(Json::Value status)
   sheader<<this->hardware()<<"@"<<location()<<"@"<<time(0);
   std::string head=sheader.str();
   
-  zmq::message_t ma1((void*)head.c_str(), head.length(), NULL);
+  zmq::message_t ma1(head.length());
+  memcpy(ma1.data(),head.c_str(), head.length());
 
-  std::cout<<"Message :"<<(char*) ma1.data()<<" size"<<ma1.size()<<std::endl;
+
+  //std::cout<<"Message :"<<(char*) ma1.data()<<" size"<<ma1.size()<<" "<<head.length()<<std::endl;
   _publisher->send(ma1, ZMQ_SNDMORE);
   // Status
   Json::Value jstatus=status;
   std::string scont= fastWriter.write(jstatus);
-  zmq::message_t ma2((void*)scont.c_str(), scont.length(), NULL); 
-  std::cout<<"Message :"<<(char*) ma2.data()<<" size"<<ma2.size()<<std::endl;
-  std::cout<<"publishing "<<head<<" =>"<<scont<<std::endl;
+
+
+  zmq::message_t ma2(scont.length());
+  memcpy(ma2.data(),scont.c_str(), scont.length());
+
+  // std::cout<<"Message :"<<(char*) ma2.data()<<" size"<<ma2.size()<<std::endl;
+  // std::cout<<"publishing:"<<head<<": =>"<<scont<<std::endl;
   _publisher->send(ma2);
 	 
 }
