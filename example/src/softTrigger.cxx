@@ -109,7 +109,7 @@ void zdaq::example::softTrigger::publishingThread()
       if (!_running) break;
 	
       _triggerPublisher->post(this->status());
-      
+      LOG4CXX_INFO(_logZdaqex,"Publishing "<<this->status()<<" "<<_microsleep);
       _event++;
       _bx++;
     }
