@@ -16,7 +16,11 @@
 #include <fcntl.h>
 #include <iostream>
 #include <sstream>
+#include "zdaqLogger.hh"
+
+
 using namespace zdaq;
+
 dummywriter::dummywriter(std::string dire) : _directory(dire),_run(0),_started(false),_fdOut(-1),_totalSize(0),_event(0),_dummy(false) {}
 void dummywriter::start(uint32_t run)
 {
@@ -54,8 +58,9 @@ void dummywriter::processEvent(uint32_t key,std::vector<zdaq::buffer*> vbuf)
 
   if (!_started) return;
   uint32_t theNumberOfDIF=vbuf.size();
-  //if (_event%100==0) 
-  std::cout<<"Standard completion "<<_event<<" GTC "<<key<<" size "<<_totalSize<<std::endl;
+  if (key%1000==0)
+    LOG4CXX_DEBUG(_logZdaq," Event :"<<key<<" Processed");
+
 
 }
 extern "C" 

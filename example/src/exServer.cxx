@@ -180,7 +180,8 @@ void zdaq::example::exServer::checkTrigger(std::vector<zdaq::mon::publishedItem*
 	  _event=x->status()["event"].asUInt();
 	  _bx=x->status()["bxid"].asUInt64();
 	  uint32_t psi=x->status()["size"].asUInt();
-	  std::cout<<" New event "<<_event<<" "<<_bx<<" "<<psi<<std::endl;
+	  if (_event%100==0)
+	    LOG4CXX_INFO(_logZdaqex," New event "<<_event<<" "<<_bx<<" "<<psi);
 	  for (std::vector<zdaq::zmPusher*>::iterator ids=_sources.begin();ids!=_sources.end();ids++)
 	    {
 	      this->fillEvent(_event,_bx,(*ids),psi);

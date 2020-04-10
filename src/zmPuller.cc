@@ -114,7 +114,8 @@ void  zmPuller::poll()
 		_socks[i]->recv(&message);
 		if (gtc%100==0)
 		  {
-		    printf("Socket ID %s  size %d : %d %d %d %ld\n",identity.c_str(),message.size(),detid,sid,gtc,bx);
+		    LOG4CXX_DEBUG(_logZdaq,"Socket ID "<<identity<<" size "<<message.size()<<" "<<detid<<" "<<sid<<" "<<gtc<<" "<<bx);
+
 		  }
 		//printf("Socket %d ID %s  size %d \n",i,identity.c_str(),message.size());
 		if (_publisher)
