@@ -27,6 +27,7 @@ zdaq::example::softTrigger::softTrigger(std::string name) : zdaq::baseApplicatio
   _fsm->addCommand("STATUS",boost::bind(&zdaq::example::softTrigger::c_status, this,_1,_2));
   _fsm->addCommand("PERIOD",boost::bind(&zdaq::example::softTrigger::c_period, this,_1,_2));
   _fsm->addCommand("SIZE",boost::bind(&zdaq::example::softTrigger::c_size, this,_1,_2));
+  _fsm->addCommand("NTRG",boost::bind(&zdaq::example::softTrigger::c_ntrg, this,_1,_2));
   
   //Start server
   
@@ -62,15 +63,21 @@ void zdaq::example::softTrigger::configure(zdaq::fsmmessage* m)
     { 
       this->parameters()["tcpPort"]=m->content()["tcpPort"];
     }
+  if (m->content().isMember("ntrg"))
+    { 
+      this->parameters()["ntrg"]=m->content()["ntrg"];
+    }
 
   // check parameters
   if (!this->parameters().isMember("microsleep")) {LOG4CXX_ERROR(_logZdaqex,"Missing microsleep");return;}
   if (!this->parameters().isMember("tcpPort")) {LOG4CXX_ERROR(_logZdaqex,"Missing tcpPort");return;}
   if (!this->parameters().isMember("datasize")) {LOG4CXX_ERROR(_logZdaqex,"Missing datasize");return;}
+  if (!this->parameters().isMember("ntrg")) {LOG4CXX_ERROR(_logZdaqex,"Missing ntrg");return;}
 
   _microsleep=this->parameters()["microsleep"].asUInt();
   _tcpPort=this->parameters()["tcpPort"].asUInt();
   _datasize=this->parameters()["datasize"].asUInt();
+  _ntrg=this->parameters()["ntrg"].asUInt();
   if (this->parameters().isMember("location"))
     _location=this->parameters()["location"].asString();
   if (this->parameters().isMember("hardware"))
@@ -95,6 +102,7 @@ Json::Value zdaq::example::softTrigger::status()
   r["bxid"]=j;
   r["size"]=_datasize;
   r["period"]=_microsleep;
+  r["ntrg"]=_ntrg;
   return r;
 }
 /**
@@ -111,8 +119,8 @@ void zdaq::example::softTrigger::publishingThread()
       _triggerPublisher->post(this->status());
       if (_event%1000==1)
 	LOG4CXX_DEBUG(_logZdaqex,"Publishing "<<this->status()<<" "<<_microsleep);
-      _event++;
-      _bx++;
+      _event=_event+_ntrg;
+      _bx=_bx+_ntrg;
     }
 }
 /**
@@ -194,6 +202,15 @@ void zdaq::example::softTrigger::c_size(Mongoose::Request &request, Mongoose::Js
   LOG4CXX_INFO(_logZdaqex,"list"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData());
   uint32_t psize=atoi(request.get("value","32").c_str());
   _datasize=psize;
+    
+  response["answer"]=this->status();
+
+}
+void zdaq::example::softTrigger::c_ntrg(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+  LOG4CXX_INFO(_logZdaqex,"list"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData());
+  uint32_t psize=atoi(request.get("value","100").c_str());
+  _ntrg=psize;
     
   response["answer"]=this->status();
 

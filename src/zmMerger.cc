@@ -113,7 +113,7 @@ void zmMerger::processEvent(uint32_t idx)
   // it->second.clear();
   // _eventMap.erase(it);
   //printf("End of processing %d Map size %d \n",_evt,_eventMap.size());
-  if (_evt%100==0)
+  if (_evt%1000==0)
     LOG4CXX_DEBUG(_logZdaq,"End of processing of event "<<_evt<<" remaining map size "<<_eventMap.size());
   // Clearing uncompleted event with GTC< 100 current GTC
 

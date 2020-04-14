@@ -112,7 +112,7 @@ void  zmPuller::poll()
 		  }
 		//std::cout<<identity<<std::endl;
 		_socks[i]->recv(&message);
-		if (gtc%100==0)
+		if (gtc%1000==0)
 		  {
 		    LOG4CXX_DEBUG(_logZdaq,"Socket ID "<<identity<<" size "<<message.size()<<" "<<detid<<" "<<sid<<" "<<gtc<<" "<<bx);
 

@@ -19,6 +19,7 @@ namespace zdaq {
       void c_status(Mongoose::Request &request, Mongoose::JsonResponse &response);
       void c_period(Mongoose::Request &request, Mongoose::JsonResponse &response);
       void c_size(Mongoose::Request &request, Mongoose::JsonResponse &response);
+      void c_ntrg(Mongoose::Request &request, Mongoose::JsonResponse &response);
       bool running(){return _running;}
     private:
       bool _running,_readout;
@@ -29,6 +30,7 @@ namespace zdaq {
       uint32_t _tcpPort;
       uint32_t _microsleep;
       uint32_t _datasize;
+      uint32_t _ntrg;
       std::string _hardware;
       std::string _location;
 
