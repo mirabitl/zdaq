@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include "zmBuffer.hh"
 #include "zmPuller.hh"
+#include "zPublisher.hh"
 #include <vector>
 #include <map>
 #include <string>
@@ -204,10 +205,15 @@ namespace zdaq {
 	
     boost::thread_group _gThread;
     bool _running,_purge;
-    uint32_t _run,_evt,_build;
+    uint32_t _run,_evt,_build,_totalSize,_compressedSize;
+    
     std::vector<uint32_t> _runHeader;
 
     std::map<std::string,uint64_t> _mReceived;
+    // Status publication
+
+    zdaq::mon::zPublisher* _statusPublisher;
+
   };
 };
 #endif

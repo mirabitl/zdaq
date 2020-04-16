@@ -5,7 +5,7 @@
 using namespace zdaq;
 using namespace zdaq::example;
 
-zdaq::example::softTrigger::softTrigger(std::string name) : zdaq::baseApplication(name),_running(false),_microsleep(100000),_event(0),_bx(0),_hardware("SoftTrigger"),_location("ANYWHWERE")
+zdaq::example::softTrigger::softTrigger(std::string name) : zdaq::baseApplication(name),_running(false),_paused(true),_microsleep(100000),_event(0),_bx(0),_hardware("SoftTrigger"),_location("ANYWHWERE")
 {
   _fsm=this->fsm();
   
@@ -28,6 +28,7 @@ zdaq::example::softTrigger::softTrigger(std::string name) : zdaq::baseApplicatio
   _fsm->addCommand("PERIOD",boost::bind(&zdaq::example::softTrigger::c_period, this,_1,_2));
   _fsm->addCommand("SIZE",boost::bind(&zdaq::example::softTrigger::c_size, this,_1,_2));
   _fsm->addCommand("NTRG",boost::bind(&zdaq::example::softTrigger::c_ntrg, this,_1,_2));
+  _fsm->addCommand("PAUSE",boost::bind(&zdaq::example::softTrigger::c_pause, this,_1,_2));
   
   //Start server
   
@@ -89,7 +90,42 @@ void zdaq::example::softTrigger::configure(zdaq::fsmmessage* m)
 
     LOG4CXX_INFO(_logZdaqex,"Publisher created: "<<_hardware<<" "<<_location<<" "<<_tcpPort);
     }
+   // Subscribe to the builder info
+  if (this->parameters().isMember("buildsub"))
+    {
+      _builderSubscriber = new  zdaq::mon::zSubscriber(_context); 
+      _builderSubscriber->addHandler(boost::bind(&zdaq::example::softTrigger::checkBuilder, this,_1));
+      
+      _builderSubscriber->addStream(this->parameters()["buildsub"].asString());
+      
+      LOG4CXX_INFO(_logZdaqex," Subscribing: "<<this->parameters()["buildsub"].asString());
+    }
 }
+void zdaq::example::softTrigger::checkBuilder(std::vector<zdaq::mon::publishedItem*>& items)
+{
+  // In trigger mode, create fake events according to the message content and publish them
+
+  for (auto x:items)
+    if (x->hardware().compare("builder")==0)
+      {
+	
+	
+	uint32_t built=x->status()["build"].asUInt();
+
+	
+	if ((_event-built)>10*_ntrg)
+	  {
+	    _throttled=true;
+	    LOG4CXX_INFO(_logZdaqex,"Throttled => builder :"<<built<<" sent "<<_event);
+	  }
+	if ((_event-built)<4*_ntrg && _throttled)
+	  {
+	  _throttled=false;
+	  LOG4CXX_INFO(_logZdaqex,"Released => builder :"<<built<<" sent "<<_event);
+	  }
+      }
+}
+
 /**
  * Return the current status of the event number,bx,datasize and period
  */
@@ -114,11 +150,13 @@ void zdaq::example::softTrigger::publishingThread()
   while (_running)
     {
       ::usleep(_microsleep);
+      if (_paused) continue;
+      if (_throttled) continue;
       if (!_running) break;
 	
       _triggerPublisher->post(this->status());
-      if (_event%1000==1)
-	LOG4CXX_DEBUG(_logZdaqex,"Publishing "<<this->status()<<" "<<_microsleep);
+
+      LOG4CXX_INFO(_logZdaqex,"Publishing "<<this->status()<<" "<<_microsleep);
       _event=_event+_ntrg;
       _bx=_bx+_ntrg;
     }
@@ -131,9 +169,11 @@ void zdaq::example::softTrigger::start(zdaq::fsmmessage* m)
   LOG4CXX_INFO(_logZdaqex,"Received "<<m->command());
   _event=0;
   _running=true;
-  
+  _paused=false;
+  _throttled=false;
   _gthr.create_thread(boost::bind(&zdaq::example::softTrigger::publishingThread, this));
-    
+  if (_builderSubscriber!=NULL)
+    _builderSubscriber->start();
 }
 /**
  * RUNNING to CONFIGURED, Stop the publishing thread
@@ -146,12 +186,17 @@ void zdaq::example::softTrigger::stop(zdaq::fsmmessage* m)
   
   // Stop running
   _running=false;
+  
   ::sleep(1);
 
   LOG4CXX_INFO(_logZdaqex,"joining");
   
   _gthr.join_all();
-   
+  _paused=true;
+  
+  if (_builderSubscriber!=NULL)
+    _builderSubscriber->stop();
+
 }
 /**
  * go back to CREATED, call stop and destroy sources
@@ -184,10 +229,10 @@ void zdaq::example::softTrigger::c_status(Mongoose::Request &request, Mongoose::
  */
 void zdaq::example::softTrigger::c_period(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
-  LOG4CXX_INFO(_logZdaqex,"list"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData());
+
   uint32_t period=atoi(request.get("value","1000000").c_str());
   _microsleep=period;
-    
+  LOG4CXX_INFO(_logZdaqex,"PERIOD "<<_microsleep);
   response["answer"]=this->status();
 
 }
@@ -199,8 +244,10 @@ void zdaq::example::softTrigger::c_period(Mongoose::Request &request, Mongoose::
 
 void zdaq::example::softTrigger::c_size(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
-  LOG4CXX_INFO(_logZdaqex,"list"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData());
+
   uint32_t psize=atoi(request.get("value","32").c_str());
+
+    LOG4CXX_INFO(_logZdaqex,"Data size "<<psize);
   _datasize=psize;
     
   response["answer"]=this->status();
@@ -208,9 +255,22 @@ void zdaq::example::softTrigger::c_size(Mongoose::Request &request, Mongoose::Js
 }
 void zdaq::example::softTrigger::c_ntrg(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
-  LOG4CXX_INFO(_logZdaqex,"list"<<request.getUrl()<<" "<<request.getMethod()<<" "<<request.getData());
+
   uint32_t psize=atoi(request.get("value","100").c_str());
+
+  LOG4CXX_INFO(_logZdaqex,"NTRG"<<psize);
   _ntrg=psize;
+    
+  response["answer"]=this->status();
+
+}
+
+void zdaq::example::softTrigger::c_pause(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+
+  uint32_t ipause=atoi(request.get("value","1").c_str());
+  _paused=(ipause==1);
+  LOG4CXX_INFO(_logZdaqex,"PAUSED "<<ipause);
     
   response["answer"]=this->status();
 

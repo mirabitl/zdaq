@@ -3,6 +3,7 @@
 #include "baseApplication.hh"
 #include "zPublisher.hh"
 #include "zdaqLogger.hh"
+#include "zSubscriber.hh"
 
 
 namespace zdaq {
@@ -20,9 +21,12 @@ namespace zdaq {
       void c_period(Mongoose::Request &request, Mongoose::JsonResponse &response);
       void c_size(Mongoose::Request &request, Mongoose::JsonResponse &response);
       void c_ntrg(Mongoose::Request &request, Mongoose::JsonResponse &response);
+      void c_pause(Mongoose::Request &request, Mongoose::JsonResponse &response);
       bool running(){return _running;}
+      void checkBuilder(std::vector<zdaq::mon::publishedItem*>& items);
+
     private:
-      bool _running,_readout;
+      bool _running,_readout,_paused,_throttled;
       boost::thread_group _gthr;
       uint32_t _event;
       uint64_t _bx;
@@ -37,6 +41,7 @@ namespace zdaq {
       // Trigger publication
 
       zdaq::mon::zPublisher* _triggerPublisher;
+      zdaq::mon::zSubscriber* _builderSubscriber;
     };
   };
 };

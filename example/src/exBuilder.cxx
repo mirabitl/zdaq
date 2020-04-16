@@ -97,7 +97,17 @@ void zdaq::example::exBuilder::configure(zdaq::fsmmessage* m)
   Json::Value prep;
   prep["sourceRegistered"]=array_keys;
   prep["processorRegistered"]=parray_keys;
-       
+
+  // if (_statusPublisher==NULL)
+  //   {
+  //     _context=new zmq::context_t(1);
+  //   _statusPublisher = new  zdaq::mon::zPublisher("builder","example",4444,_context);
+
+  //   LOG4CXX_INFO(_logZdaqex,"Publisher created: "<<_hardware<<" "<<_location<<" "<<_tcpPort);
+  //   }
+
+
+  
   m->setAnswer(prep);
   LOG4CXX_DEBUG(_logZdaqex,"end of configure");
   return;

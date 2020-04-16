@@ -115,10 +115,12 @@ void zdaq::example::exServer::configure(zdaq::fsmmessage* m)
       zdaq::zmPusher* ds= new zdaq::zmPusher(_context,det,sid);
       ds->connect(this->parameters()["pushdata"].asString());
       ds->collectorRegister();
-      
+
+
       if (this->parameters().isMember("compress"))
 	ds->setCompress(this->parameters()["compress"].asUInt()==1);
-
+      
+      
       _sources.push_back(ds);
       _stat.insert(std::pair<uint32_t,uint32_t>((det<<16)|sid,0));
 	
@@ -159,7 +161,7 @@ void zdaq::example::exServer::fillEvent(uint32_t event,uint64_t bx,zdaq::zmPushe
   pld[0]=event;
   pld[eventSize-1]=event;
   // Publish the data source
-  ds->publish(_event,bx,eventSize*sizeof(uint32_t));
+  ds->publish(event,bx,eventSize*sizeof(uint32_t));
   // Update statistics
   std::map<uint32_t,uint32_t>::iterator its=_stat.find((ds->buffer()->detectorId()<<16)|ds->buffer()->dataSourceId());
   if (its!=_stat.end())
@@ -191,6 +193,7 @@ void zdaq::example::exServer::checkTrigger(std::vector<zdaq::mon::publishedItem*
 		  this->fillEvent(_event,_bx,(*ids),psi);
 		}
 	      _event++;
+	      _bx++;
 	    }
 	}
 }

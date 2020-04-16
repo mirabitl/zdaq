@@ -28,6 +28,11 @@ zmMerger::zmMerger(zmq::context_t* c) : zmPuller(c), _running(false),_nDifs(0),_
   _processors.clear();
 
   _mReceived.clear();
+
+  _statusPublisher = new  zdaq::mon::zPublisher("builder","example",4444,c);
+
+  LOG4CXX_INFO(_logZdaq," Status Publisher created on port 4444");
+
 }
 zmMerger::~zmMerger()
 {
@@ -117,7 +122,11 @@ void zmMerger::processEvent(uint32_t idx)
     LOG4CXX_DEBUG(_logZdaq,"End of processing of event "<<_evt<<" remaining map size "<<_eventMap.size());
   // Clearing uncompleted event with GTC< 100 current GTC
 
-  
+  if (_build%1000==0)
+    {
+      LOG4CXX_DEBUG(_logZdaq,"Publishing status "<<this->status());
+      _statusPublisher->post(this->status());
+    }
 }
 void zmMerger::processRunHeader()
 {
@@ -142,7 +151,8 @@ void zmMerger::start(uint32_t nr)
   _run=nr;
   _evt=0;
   _build=0;
-
+  _totalSize=0;
+  _compressedSize=0;
     // clear event Map
   for (std::map<uint64_t,std::vector<zdaq::buffer*> >::iterator it=_eventMap.begin();it!=_eventMap.end();it++)
     {
@@ -202,11 +212,14 @@ void  zmMerger::processData(std::string idd,zmq::message_t *message)
     // printf("Message 0) %x %d %d %ld \n",iptr[0],iptr[1],iptr[2],iptr64[0]);
 
 
-  
+
   memcpy(b->ptr(),message->data(),message->size());
   b->setSize(message->size());
+  _compressedSize+=b->payloadSize();
   // printf("Message 1) %d %d %d \n",b->detectorId(),b->dataSourceId(),b->eventId());
   b->uncompress();
+
+  _totalSize+=b->payloadSize();
   // printf("Message 2) %d %d %d \n",b->detectorId(),b->dataSourceId(),b->eventId());
   if (it_gtc!=_eventMap.end())
     it_gtc->second.push_back(b);
@@ -308,6 +321,9 @@ Json::Value zmMerger::status()
   jsta["run"]=_run;
   jsta["event"]=_evt;
   jsta["build"]=_build;
+  jsta["compressed"]=_compressedSize;
+  jsta["total"]=_totalSize;
+  
   jsta["running"]=_running;
   jsta["purge"]=_purge;
   jsta["size"]=(uint32_t) _eventMap.size();
