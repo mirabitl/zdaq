@@ -112,13 +112,20 @@ void zdaq::example::softTrigger::checkBuilder(std::vector<zdaq::mon::publishedIt
 	
 	uint32_t built=x->status()["build"].asUInt();
 
+	LOG4CXX_INFO(_logZdaqex,"Throttling => builder :"<<built<<" sent "<<_event);
+	uint32_t nh=1000,nl=400;
+	if (_ntrg>100)
+	  {
+	  nh=_ntrg*10;
+	  nl=_ntrg*4;
+	  }
 	
-	if ((_event-built)>10*_ntrg)
+	if ((_event-built)>nh)
 	  {
 	    _throttled=true;
 	    LOG4CXX_INFO(_logZdaqex,"Throttled => builder :"<<built<<" sent "<<_event);
 	  }
-	if ((_event-built)<4*_ntrg && _throttled)
+	if ((_event-built)<nl && _throttled)
 	  {
 	  _throttled=false;
 	  LOG4CXX_INFO(_logZdaqex,"Released => builder :"<<built<<" sent "<<_event);
@@ -156,7 +163,8 @@ void zdaq::example::softTrigger::publishingThread()
 	
       _triggerPublisher->post(this->status());
 
-      LOG4CXX_INFO(_logZdaqex,"Publishing "<<this->status()<<" "<<_microsleep);
+      if (_event%100==0)
+	LOG4CXX_INFO(_logZdaqex,"Publishing "<<this->status()<<" "<<_microsleep);
       _event=_event+_ntrg;
       _bx=_bx+_ntrg;
     }
