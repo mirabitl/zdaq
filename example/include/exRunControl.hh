@@ -52,8 +52,9 @@ namespace zdaq
   
     private:
       zdaq::fsmweb* _fsm;
-      fsmwebCaller *_triggerClient,*_builderClient;
+      fsmwebCaller *_triggerClient;
       std::vector<fsmwebCaller*> _exServerClients;
+      std::vector<fsmwebCaller*> _builderClients;
  
   
       uint32_t _run;

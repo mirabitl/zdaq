@@ -14,7 +14,7 @@ using namespace zdaq::example;
 
 exRunControl::exRunControl(std::string name) : zdaq::baseApplication(name)
   {
-    _builderClient=0;_triggerClient=0;
+    _builderClients.clear();_triggerClient=0;
     
     _exServerClients.clear();
     
@@ -114,9 +114,10 @@ void exRunControl::c_listProcess(Mongoose::Request &request, Mongoose::JsonRespo
 	  // Now analyse process Name
 	  if (p_name.compare("BUILDER")==0 )
 	    {
-	      if (_builderClient == NULL) _builderClient= new fsmwebCaller(host,port);
-	      Json::Value jstat=_builderClient->queryWebStatus();Json::Value jres;jres["NAME"]=p_name;jres["HOST"]=host;jres["PORT"]=port;jres["PID"]=jstat["PID"];jres["STATE"]=jstat["STATE"];rep.append(jres);
+	      fsmwebCaller builderClient(host,port);
+	      Json::Value jstat=builderClient.queryWebStatus();Json::Value jres;jres["NAME"]=p_name;jres["HOST"]=host;jres["PORT"]=port;jres["PID"]=jstat["PID"];jres["STATE"]=jstat["STATE"];rep.append(jres);
 	      
+	
 	     
 	    }
 	  
@@ -181,14 +182,15 @@ void exRunControl::discover()
 	  // Now analyse process Name
 	  if (p_name.compare("BUILDER")==0)
 	    {
-	      _builderClient= new fsmwebCaller(host,port);
-	      std::string state=_builderClient->queryState();
+	      fsmwebCaller* builderClient= new fsmwebCaller(host,port);
+	      std::string state=builderClient->queryState();
 	      printf("Builder client   %s \n",state.c_str());
 	      if (state.compare("VOID")==0 && !_jConfigContent.empty())
 		{
-		  _builderClient->sendTransition("CREATE",_jConfigContent);
+		  builderClient->sendTransition("CREATE",_jConfigContent);
 		}
 	      if (!p_param.empty()) this->parameters()["builder"]=p_param;
+	      _builderClients.push_back(builderClient);
 	    }
 	  
 	  if (p_name.compare("TRIGGER")==0)
@@ -261,9 +263,12 @@ void exRunControl::singlestop(fsmwebCaller* d)
 void exRunControl::initialise(zdaq::fsmmessage* m)
 {
   // Configure the Event builder
-   if (_builderClient)
+  if (_builderClients.size()>0)
     {
-      _builderClient->sendTransition("CONFIGURE");
+
+
+      for (auto x=_builderClients.begin();x!=_builderClients.end();x++)
+	(*x)->sendTransition("CONFIGURE");
     }
  
   // Initialise all data sources server
@@ -338,12 +343,13 @@ void exRunControl::start(zdaq::fsmmessage* m)
     }
   LOG4CXX_INFO(_logZdaqex,__PRETTY_FUNCTION__<<" new run "<<_run);
   // Start the builder
-   if (_builderClient)
+  if (_builderClients.size())
     {
       LOG4CXX_DEBUG(_logZdaqex,__PRETTY_FUNCTION__<<" calling Builder start ");
       Json::Value jl;
       jl["run"]=_run;
-      _builderClient->sendTransition("START",jl);
+      for (auto x=_builderClients.begin();x!=_builderClients.end();x++)
+	(*x)->sendTransition("START",jl);
       ::sleep(1);
     }
     
@@ -391,9 +397,10 @@ void exRunControl::stop(zdaq::fsmmessage* m)
   LOG4CXX_DEBUG(_logZdaqex,__PRETTY_FUNCTION__<<"end of STOP of exServers Status ");
   
   // Stop the builder
-   if (_builderClient)
+  if (_builderClients.size())
     {
-      _builderClient->sendTransition("STOP");
+      for (auto x=_builderClients.begin();x!=_builderClients.end();x++)
+	(*x)->sendTransition("STOP");
     }
    LOG4CXX_DEBUG(_logZdaqex,__PRETTY_FUNCTION__<<"end of STOP  ");
    
@@ -414,9 +421,10 @@ void exRunControl::halt(zdaq::fsmmessage* m)
       jl["difid"]=0;
       (*it)->sendTransition("HALT",jl);
     }
-   if (_builderClient)
+  if (_builderClients.size())
     {
-      _builderClient->sendTransition("HALT");
+      for (auto x=_builderClients.begin();x!=_builderClients.end();x++)
+	(*x)->sendTransition("HALT");
     }
    LOG4CXX_DEBUG(_logZdaqex,__PRETTY_FUNCTION__<<"end of HALT  ");
 }
@@ -425,12 +433,13 @@ exRunControl::~exRunControl()
 {
  
   if (_triggerClient) delete _triggerClient;
-  if (_builderClient) delete _builderClient;
+  for (auto x=_builderClients.begin();x!=_builderClients.end();x++)
+    delete (*x);
   for (std::vector<fsmwebCaller*>::iterator it=_exServerClients.begin();it!=_exServerClients.end();it++)
     delete (*it);
   
   _exServerClients.clear();
-  
+  _builderClients.clear();
   
 }
 
@@ -448,27 +457,32 @@ void exRunControl::c_changeState(Mongoose::Request &request, Mongoose::JsonRespo
 
 Json::Value exRunControl::json_builder_status()
 {
-  Json::Value r=Json::Value::null;
-  r["run"]=-1;
-  r["event"]=-1;
-  
-  if (_builderClient==NULL){LOG4CXX_ERROR(_logZdaqex,__PRETTY_FUNCTION__<< "No SHM client");return r;}
-  _builderClient->sendCommand("STATUS");
-  LOG4CXX_DEBUG(_logZdaqex,__PRETTY_FUNCTION__<<_builderClient->answer());
-  if (!_builderClient->answer().empty())
+  Json::Value rep;
+  for (auto x=_builderClients.begin();x!=_builderClients.end();x++)
     {
-      if (_builderClient->answer().isMember("answer"))
+      Json::Value r=Json::Value::null;
+      r["run"]=-1;
+      r["event"]=-1;
+      r["url"]=(*x)->url();
+
+      (*x)->sendCommand("STATUS");
+      LOG4CXX_DEBUG(_logZdaqex,__PRETTY_FUNCTION__<<(*x)->answer());
+      if (!(*x)->answer().empty())
+	{
+	  if ((*x)->answer().isMember("answer"))
 	
-	  r["run"]=_builderClient->answer()["answer"]["answer"]["run"];
-	  r["event"]=_builderClient->answer()["answer"]["answer"]["event"];
-	  r["builder"]=_builderClient->answer()["answer"]["answer"]["difs"];
-	  r["built"]=_builderClient->answer()["answer"]["answer"]["build"];
-	  r["total"]=_builderClient->answer()["answer"]["answer"]["total"];
-	  r["compressed"]=_builderClient->answer()["answer"]["answer"]["compressed"];
+	    r["run"]=(*x)->answer()["answer"]["answer"]["run"];
+	  r["event"]=(*x)->answer()["answer"]["answer"]["event"];
+	  r["builder"]=(*x)->answer()["answer"]["answer"]["difs"];
+	  r["built"]=(*x)->answer()["answer"]["answer"]["build"];
+	  r["total"]=(*x)->answer()["answer"]["answer"]["total"];
+	  r["compressed"]=(*x)->answer()["answer"]["answer"]["compressed"];
 	  r["time"]=(int) time(0);
 	
+	}
+      rep.append(r);
     }
-  return r;
+  return rep;
 }
 
 

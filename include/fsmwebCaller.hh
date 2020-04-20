@@ -70,10 +70,16 @@ public:
   std::string sendCommand(std::string name,std::string params=std::string(""));
   
   Json::Value answer();///< Value of the _answer private Json::Value
+
+  std::string url(){return _url;}
+  std::string host(){return _host;}
+  uint32_t port(){return _port;}
 private:
   bool _parseOk;
   Json::Value _jConfig;
   std::string _url;
   Json::Value _answer;
+  std::string _host;
+  uint32_t _port;
 };
 #endif

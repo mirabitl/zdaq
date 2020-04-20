@@ -29,9 +29,11 @@ zmMerger::zmMerger(zmq::context_t* c) : zmPuller(c), _running(false),_nDifs(0),_
 
   _mReceived.clear();
 
+  /*
   _statusPublisher = new  zdaq::mon::zPublisher("builder","example",4444,c);
 
   LOG4CXX_INFO(_logZdaq," Status Publisher created on port 4444");
+  */
 
 }
 zmMerger::~zmMerger()
@@ -122,11 +124,13 @@ void zmMerger::processEvent(uint32_t idx)
     LOG4CXX_DEBUG(_logZdaq,"End of processing of event "<<_evt<<" remaining map size "<<_eventMap.size());
   // Clearing uncompleted event with GTC< 100 current GTC
 
+  /*
   if (_build%1000==0)
     {
       LOG4CXX_DEBUG(_logZdaq,"Publishing status "<<this->status());
       _statusPublisher->post(this->status());
     }
+  */
 }
 void zmMerger::processRunHeader()
 {

@@ -68,7 +68,7 @@ std::string escapeJsonString(const std::string& input) {
 }
 
 
-fsmwebCaller::fsmwebCaller(std::string host,uint32_t port)
+fsmwebCaller::fsmwebCaller(std::string host,uint32_t port) : _host(host),_port(port)
 {
   std::stringstream s;
   s<<"http://"<<host<<":"<<port<<"/";

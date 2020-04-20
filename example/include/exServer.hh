@@ -2,7 +2,7 @@
 #ifndef EXSERVER_HH
 # define EXSERVER_HH
 #include "baseApplication.hh"
-# include "zmPusher.hh"
+# include "zmSender.hh"
 #include "zSubscriber.hh"
 #include "zdaqLogger.hh"
 
@@ -17,7 +17,7 @@ namespace zdaq {
       void start(zdaq::fsmmessage* m);
       void stop(zdaq::fsmmessage* m);
       void halt(zdaq::fsmmessage* m);
-      void streamdata(zdaq::zmPusher *ds);
+      void streamdata(zdaq::zmSender *ds);
       void generate(Mongoose::Request &request, Mongoose::JsonResponse &response);
       void status(Mongoose::Request &request, Mongoose::JsonResponse &response);
       void incrementEvent() {_event++;_bx++;}
@@ -25,12 +25,13 @@ namespace zdaq {
       inline void setDetectorId(uint32_t id) {_detid=id;}
       inline uint32_t getDetectorId() {return _detid;}
       void checkTrigger(std::vector<zdaq::mon::publishedItem*>& items);
-      void fillEvent(uint32_t event,uint64_t bx,zdaq::zmPusher* ds,uint32_t eventSize);
-
+      void fillEvent(uint32_t event,uint64_t bx,zdaq::zmSender* ds,uint32_t eventSize);
+      void discover();
     private:
       zdaq::fsmweb* _fsm;
       uint32_t _detid;
-      std::vector<zdaq::zmPusher*> _sources;
+      std::vector<std::string> _vStream;
+      std::vector<zdaq::zmSender*> _sources;
       std::map<uint32_t,uint32_t> _stat;
       bool _running,_readout;
       boost::thread_group _gthr;

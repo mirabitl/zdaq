@@ -46,13 +46,14 @@ void zdaq::example::exServer::initialise(zdaq::fsmmessage* m)
   LOG4CXX_DEBUG(_logZdaqex," Receiving: "<<m->command()<<" value:"<<m->value());
   // Initialise random data packet
   for (int i=1;i<0x20000;i++) _plrand[i]= std::rand();
+  this->discover();
 }
 void zdaq::example::exServer::configure(zdaq::fsmmessage* m)
 {
   
   LOG4CXX_DEBUG(_logZdaqex," Receiving: "<<m->command()<<" value:"<<m->value());
-  // Delete any  existing zmPushers
-  for (std::vector<zdaq::zmPusher*>::iterator it=_sources.begin();it!=_sources.end();it++)
+  // Delete any  existing zmSenders
+  for (std::vector<zdaq::zmSender*>::iterator it=_sources.begin();it!=_sources.end();it++)
     delete (*it);
   _sources.clear();
   // Clear statistics
@@ -99,7 +100,7 @@ void zdaq::example::exServer::configure(zdaq::fsmmessage* m)
   if (!this->parameters().isMember("paysize")) {LOG4CXX_ERROR(_logZdaqex,"Missing paysize payload size");return;}
   if (!this->parameters().isMember("mode")) {LOG4CXX_ERROR(_logZdaqex,"Missing mode TRIGGER/ALONE");return;}
 
-  // declare source and create zmPushers
+  // declare source and create zmSenders
   Json::Value jc=this->parameters();
   int32_t det=jc["detid"].asInt();
   _detid=det;
@@ -112,8 +113,10 @@ void zdaq::example::exServer::configure(zdaq::fsmmessage* m)
       // rest as before
       LOG4CXX_INFO(_logZdaqex,"Creating data source "<<det<<" "<<sid);
       array_keys.append((det<<16)|sid);
-      zdaq::zmPusher* ds= new zdaq::zmPusher(_context,det,sid);
-      ds->connect(this->parameters()["pushdata"].asString());
+      zdaq::zmSender* ds= new zdaq::zmSender(_context,det,sid);
+      //ds->connect(this->parameters()["pushdata"].asString());
+      for (auto x:_vStream)
+	ds->connect(x);
       ds->collectorRegister();
 
 
@@ -142,9 +145,9 @@ void zdaq::example::exServer::configure(zdaq::fsmmessage* m)
   
 }
 /**
- * Thread process per zmPusher: Fill and publish an event
+ * Thread process per zmSender: Fill and publish an event
  */
-void zdaq::example::exServer::fillEvent(uint32_t event,uint64_t bx,zdaq::zmPusher* ds,uint32_t eventSize)
+void zdaq::example::exServer::fillEvent(uint32_t event,uint64_t bx,zdaq::zmSender* ds,uint32_t eventSize)
 {
   // randomize event size if not set
   if (eventSize==0)
@@ -188,7 +191,7 @@ void zdaq::example::exServer::checkTrigger(std::vector<zdaq::mon::publishedItem*
 
 	      if (_event%100==0)
 		LOG4CXX_INFO(_logZdaqex," New event "<<_event<<" "<<_bx<<" "<<psi);
-	      for (std::vector<zdaq::zmPusher*>::iterator ids=_sources.begin();ids!=_sources.end();ids++)
+	      for (std::vector<zdaq::zmSender*>::iterator ids=_sources.begin();ids!=_sources.end();ids++)
 		{
 		  this->fillEvent(_event,_bx,(*ids),psi);
 		}
@@ -200,7 +203,7 @@ void zdaq::example::exServer::checkTrigger(std::vector<zdaq::mon::publishedItem*
 /**
  * Standalone thread with no external trigger to publish continously data
  */
-void zdaq::example::exServer::streamdata(zdaq::zmPusher *ds)
+void zdaq::example::exServer::streamdata(zdaq::zmSender *ds)
 {
   uint32_t last_evt=0;
   std::srand(std::time(0));
@@ -233,7 +236,7 @@ void zdaq::example::exServer::start(zdaq::fsmmessage* m)
   if (this->parameters()["mode"].asString().compare("ALONE")==0)
     {
       // Standalone all datasources are publishing continously events of fixed size
-      for (std::vector<zdaq::zmPusher*>::iterator ids=_sources.begin();ids!=_sources.end();ids++)
+      for (std::vector<zdaq::zmSender*>::iterator ids=_sources.begin();ids!=_sources.end();ids++)
 	{
 	  //(*ids)->collectorRegister();
 	  _gthr.create_thread(boost::bind(&zdaq::example::exServer::streamdata, this,(*ids)));
@@ -245,7 +248,7 @@ void zdaq::example::exServer::start(zdaq::fsmmessage* m)
       // Soft trigger mode, events are published when a trigger is received
       LOG4CXX_INFO(_logZdaqex,"Working in trigger handling mode");
       
-      // for (std::vector<zdaq::zmPusher*>::iterator ids=_sources.begin();ids!=_sources.end();ids++)
+      // for (std::vector<zdaq::zmSender*>::iterator ids=_sources.begin();ids!=_sources.end();ids++)
       // 	{
       // 	  (*ids)->collectorRegister();
       // 	}
@@ -285,7 +288,7 @@ void zdaq::example::exServer::halt(zdaq::fsmmessage* m)
     this->stop(m);
   std::cout<<"Destroying"<<std::endl;
   //stop data sources
-  for (std::vector<zdaq::zmPusher*>::iterator it=_sources.begin();it!=_sources.end();it++)
+  for (std::vector<zdaq::zmSender*>::iterator it=_sources.begin();it!=_sources.end();it++)
     delete (*it);
   _sources.clear();
 }
@@ -321,7 +324,41 @@ void zdaq::example::exServer::status(Mongoose::Request &request, Mongoose::JsonR
     }
   std::cout<<array_keys<<std::endl;
   response["detector"]=_detid;
-  response["zmPushers"]=array_keys;
+  response["zmSenders"]=array_keys;
 
 }
 
+void exServer::discover()
+{
+
+  Json::Value cjs=this->configuration()["HOSTS"];
+  //  std::cout<<cjs<<std::endl;
+  std::vector<std::string> lhosts=this->configuration()["HOSTS"].getMemberNames();
+  // Loop on hosts
+  for (auto host:lhosts)
+    {
+      //std::cout<<" Host "<<host<<" found"<<std::endl;
+      // Loop on processes and find their hots,name and port
+      const Json::Value cjsources=this->configuration()["HOSTS"][host];
+      //std::cout<<cjsources<<std::endl;
+      for (Json::ValueConstIterator it = cjsources.begin(); it != cjsources.end(); ++it)
+	{
+	  const Json::Value& process = *it;
+	  std::string p_name=process["NAME"].asString();
+	  if (p_name.compare("BUILDER")!=0) continue;
+	  Json::Value p_param=Json::Value::null;
+	  if (process.isMember("PARAMETER")) p_param=process["PARAMETER"];
+	  if (p_param.isMember("collectingPort"))
+	    {
+	      std::stringstream ss;
+	      ss<<"tcp://"<<host<<":"<<p_param["collectingPort"].asUInt();
+	      _vStream.push_back(ss.str());
+	      LOG4CXX_INFO(_logZdaqex," Builder paramaters "<<host<<" collecting on "<<ss.str());	  
+	    }
+
+	}
+
+    }
+  
+
+}
