@@ -27,7 +27,6 @@ namespace zdaq
       zdaq::zmMerger* _merger;
       bool _running,_readout;
       zmq::context_t* _context;
-    
     };
   };
 };
