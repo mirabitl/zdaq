@@ -120,8 +120,8 @@ void zmMerger::processEvent(uint32_t idx)
   // it->second.clear();
   // _eventMap.erase(it);
   //printf("End of processing %d Map size %d \n",_evt,_eventMap.size());
-  if (_evt%1000==0)
-    LOG4CXX_DEBUG(_logZdaq,"End of processing of event "<<_evt<<" remaining map size "<<_eventMap.size());
+  if (_build%100==0)
+    LOG4CXX_DEBUG(_logZdaq,"End of processing of event "<<_evt<<" remaining map size "<<_eventMap.size()<<"  built"<<_build);
   // Clearing uncompleted event with GTC< 100 current GTC
 
   /*
@@ -206,7 +206,7 @@ void  zmMerger::processData(std::string idd,zmq::message_t *message)
   uint32_t detid,sid,gtc;
   uint64_t bx;
   sscanf(idd.c_str(),"DS-%d-%d %d %ld",&detid,&sid,&gtc,&bx);
-  //printf("Message %s DS-%d-%d %d %ld\n",idd.c_str(),detid,sid,gtc,bx);
+  //fprintf(stderr,"Message %s DS-%d-%d %d %ld\n",idd.c_str(),detid,sid,gtc,bx);
   std::map<uint64_t,std::vector<zdaq::buffer*> >::iterator it_gtc=_eventMap.find(gtc);
 
   zdaq::buffer *b = new zdaq::buffer(512*1024);
