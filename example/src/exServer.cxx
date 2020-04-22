@@ -115,8 +115,8 @@ void zdaq::example::exServer::configure(zdaq::fsmmessage* m)
       array_keys.append((det<<16)|sid);
       zdaq::zmSender* ds= new zdaq::zmSender(_context,det,sid);
       //ds->connect(this->parameters()["pushdata"].asString());
-      for (auto x:_vStream)
-	ds->connect(x);
+      for (uint32_t i=0;i<_mStream.size();i++)
+	ds->connect(_mStream[i]);
       ds->collectorRegister();
 
 
@@ -349,15 +349,32 @@ void exServer::discover()
       for (Json::ValueConstIterator it = cjsources.begin(); it != cjsources.end(); ++it)
 	{
 	  const Json::Value& process = *it;
+	  
 	  std::string p_name=process["NAME"].asString();
 	  if (p_name.compare("BUILDER")!=0) continue;
+	  uint32_t instance=0;
+	  const Json::Value& cenv=process["ENV"];
+	  for (Json::ValueConstIterator iev = cenv.begin(); iev != cenv.end(); ++iev)
+	    {
+	      std::string envp=(*iev).asString();
+	      //      std::cout<<"Env found "<<envp.substr(0,7)<<std::endl;
+	      //std::cout<<"Env found "<<envp.substr(8,envp.length()-7)<<std::endl;
+	      if (envp.substr(0,8).compare("INSTANCE")==0)
+		{
+		  instance=atol(envp.substr(9,envp.length()-8).c_str());
+		  break;
+		}
+	    }
+
+	  
 	  Json::Value p_param=Json::Value::null;
 	  if (process.isMember("PARAMETER")) p_param=process["PARAMETER"];
 	  if (p_param.isMember("collectingPort"))
 	    {
 	      std::stringstream ss;
 	      ss<<"tcp://"<<host<<":"<<p_param["collectingPort"].asUInt();
-	      _vStream.push_back(ss.str());
+	      std::pair<uint32_t,std::string> p(instance,ss.str());
+	      _mStream.insert(p);
 	      LOG4CXX_INFO(_logZdaqex," Builder paramaters "<<host<<" collecting on "<<ss.str());	  
 	    }
 

@@ -148,6 +148,7 @@ void exRunControl::c_listProcess(Mongoose::Request &request, Mongoose::JsonRespo
 void exRunControl::discover()
 {
   _exServerClients.clear();
+  _builderClients.clear();
   Json::Value cjs=this->configuration()["HOSTS"];
   //  std::cout<<cjs<<std::endl;
   std::vector<std::string> lhosts=this->configuration()["HOSTS"].getMemberNames();
@@ -184,7 +185,7 @@ void exRunControl::discover()
 	    {
 	      fsmwebCaller* builderClient= new fsmwebCaller(host,port);
 	      std::string state=builderClient->queryState();
-	      printf("Builder client   %s \n",state.c_str());
+	      fprintf(stderr,"Builder client   %s \n",state.c_str());
 	      if (state.compare("VOID")==0 && !_jConfigContent.empty())
 		{
 		  builderClient->sendTransition("CREATE",_jConfigContent);
@@ -197,22 +198,22 @@ void exRunControl::discover()
 	    {
 	      _triggerClient= new fsmwebCaller(host,port);
 	      std::string state=_triggerClient->queryState();
-	      printf("Mdcc client  %s \n",state.c_str());
+	      fprintf(stderr,"Mdcc client  %s \n",state.c_str());
 	      if (state.compare("VOID")==0 && !_jConfigContent.empty())
 		{
 		  _triggerClient->sendTransition("CREATE",_jConfigContent);
 		}
 	      if (!p_param.empty()) this->parameters()["trigger"]=p_param;
 		      
-	      //printf("MDCC client %x \n",_triggerClient);
+	      //fprintf(stderr,"MDCC client %x \n",_triggerClient);
 	    }
 	
 	   if (p_name.compare("EXSERVER")==0)
 	    {
 	      fsmwebCaller* dc= new fsmwebCaller(host,port);
-	      //printf("DIF client %x \n",dc);
+	      //fprintf(stderr,"DIF client %x \n",dc);
 	      std::string state=dc->queryState();
-	      printf("exServer client  %s \n",state.c_str());
+	      fprintf(stderr,"exServer client  %s \n",state.c_str());
 	      if (state.compare("VOID")==0 && !_jConfigContent.empty())
 		{
 		  dc->sendTransition("CREATE",_jConfigContent);
@@ -265,7 +266,7 @@ void exRunControl::initialise(zdaq::fsmmessage* m)
   // Configure the Event builder
   if (_builderClients.size()>0)
     {
-
+      LOG4CXX_DEBUG(_logZdaqex,__PRETTY_FUNCTION__<<"Builder initialisation"<<_builderClients.size());
 
       for (auto x=_builderClients.begin();x!=_builderClients.end();x++)
 	(*x)->sendTransition("CONFIGURE");
