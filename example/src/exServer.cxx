@@ -176,9 +176,12 @@ void zdaq::example::exServer::fillEvent(uint32_t event,uint64_t bx,zdaq::zmSende
  */
 void zdaq::example::exServer::checkTrigger(std::vector<zdaq::mon::publishedItem*>& items)
 {
+  LOG4CXX_INFO(_logZdaqex," New trigger burst ");
   // In trigger mode, create fake events according to the message content and publish them
   if (this->parameters()["mode"].asString().compare("ALONE")!=0)
     for (auto x:items)
+      {
+	LOG4CXX_INFO(_logZdaqex,"Status "<<x->status());
       if (x->hardware().compare("DUMMYTRIGGER")==0)
 	{
 	  
@@ -199,6 +202,8 @@ void zdaq::example::exServer::checkTrigger(std::vector<zdaq::mon::publishedItem*
 	      _bx++;
 	    }
 	}
+      }
+    LOG4CXX_INFO(_logZdaqex,"End trigger burst ");
 }
 /**
  * Standalone thread with no external trigger to publish continously data

@@ -36,16 +36,34 @@ zdaq::mon::publishedItem::~publishedItem()
 }
 void zdaq::mon::publishedItem::processData(std::string address,std::string contents)
 {
+  //LOG4CXX_INFO(_logZdaq,"Entering process data: "<<contents);
   std::vector<std::string> strs;
   strs.clear();
   boost::split(strs,address, boost::is_any_of("@"));
   _hardware=strs[0];
   _location=strs[1];
-  sscanf(strs[2].c_str(),"%lld",(long long *) &_time);
-  _status.clear();
-  Json::Reader reader;
-  bool parsingSuccessful = reader.parse(contents,_status);
   
+  sscanf(strs[2].c_str(),"%lld",(long long *) &_time);
+  //LOG4CXX_INFO(_logZdaq,"HW: "<<_hardware<< " location: "<<_location<<" time"<<_time);
+  //_status.clear();
+  //LOG4CXX_INFO(_logZdaq,"2HW: "<<_hardware<< " location: "<<_location<<" time"<<_time);
+  Json::Reader reader;
+  // LOG4CXX_INFO(_logZdaq,"3HW: "<<_hardware<< " location: "<<_location<<" time"<<_time);
+  Json::Value v;
+  //LOG4CXX_INFO(_logZdaq,"4HW: "<<_hardware<< " location: "<<_location<<" time"<<_time);
+  bool parsingSuccessful;
+  try {
+    parsingSuccessful = reader.parse(contents,v);
+    //LOG4CXX_INFO(_logZdaq,"5HW: "<<_hardware<< " location: "<<_location<<" time"<<_time);
+  }
+  catch(...)
+    {
+      LOG4CXX_ERROR(_logZdaq,"parsing failed");
+    }
+  if (parsingSuccessful)
+    _status=v;
+  //  LOG4CXX_INFO(_logZdaq,"End: "<<_status);
+
 }
 
 zdaq::mon::zSubscriber::zSubscriber(zmq::context_t* context) :  _running(false),_context(context)
@@ -149,15 +167,18 @@ void zdaq::mon::zSubscriber::poll()
 	        contents.clear();
 	        contents.assign((char*) m->data(),m->size());
 
+		//LOG4CXX_INFO(_logZdaq,"Message size is "<<m->size()<<" ADR: "<<address<<" CONT: "<<contents);
 	        _items[i]->processData(address,contents);
-	  
-		//std::cout<<"Message size is "<<m->size()<<" ADR: "<<address<<" CONT: "<<contents<<std::endl;
+		//LOG4CXX_INFO(_logZdaq,"Message is processed");
+
 
 	        }
 	}
             //call handlers
+      //LOG4CXX_INFO(_logZdaq,"Message is sent to handlers");
       for (auto x=_handlers.begin();x!=_handlers.end();x++)
             (*x)(_items);
+      //LOG4CXX_INFO(_logZdaq,"Message is processed by handlers");
     }
     
 }
