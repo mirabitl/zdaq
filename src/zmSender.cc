@@ -101,3 +101,61 @@ void zmSender::collectorRegister()
 	}
     }
 }
+void zmSender::autoDiscover(Json::Value config,std::string appname,std::string portname)
+{
+
+  std::map<uint32_t,std::string> mStream;
+  mStream.clear();
+  Json::Value cjs=config["HOSTS"];
+  //  std::cout<<cjs<<std::endl;
+  std::vector<std::string> lhosts=cjs.getMemberNames();
+  // Loop on hosts
+  for (auto host:lhosts)
+    {
+      //std::cout<<" Host "<<host<<" found"<<std::endl;
+      // Loop on processes and find their hots,name and port
+      const Json::Value cjsources=cjs[host];
+      //std::cout<<cjsources<<std::endl;
+      for (Json::ValueConstIterator it = cjsources.begin(); it != cjsources.end(); ++it)
+	{
+	  const Json::Value& process = *it;
+	  
+	  std::string p_name=process["NAME"].asString();
+	  if (p_name.compare(appname)!=0) continue;
+	  uint32_t instance=0;
+	  const Json::Value& cenv=process["ENV"];
+	  for (Json::ValueConstIterator iev = cenv.begin(); iev != cenv.end(); ++iev)
+	    {
+	      std::string envp=(*iev).asString();
+	      //      std::cout<<"Env found "<<envp.substr(0,7)<<std::endl;
+	      //std::cout<<"Env found "<<envp.substr(8,envp.length()-7)<<std::endl;
+	      if (envp.substr(0,8).compare("INSTANCE")==0)
+		{
+		  instance=atol(envp.substr(9,envp.length()-8).c_str());
+		  break;
+		}
+	    }
+
+	  
+	  Json::Value p_param=Json::Value::null;
+	  if (process.isMember("PARAMETER")) p_param=process["PARAMETER"];
+	  if (p_param.isMember(portname))
+	    {
+	      std::stringstream ss;
+	      ss<<"tcp://"<<host<<":"<<p_param["collectingPort"].asUInt();
+	      std::pair<uint32_t,std::string> p(instance,ss.str());
+	      mStream.insert(p);
+	      LOG4CXX_INFO(_logZdaqex," Builder paramaters "<<host<<" collecting on "<<ss.str());	  
+	    }
+
+	}
+
+    }
+
+  // Connect to the specified streams
+  for (uint32_t i=0;i<mStream.size();i++)
+	this->connect(mStream[i]);
+
+  
+
+}

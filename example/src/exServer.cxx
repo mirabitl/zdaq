@@ -46,7 +46,7 @@ void zdaq::example::exServer::initialise(zdaq::fsmmessage* m)
   LOG4CXX_DEBUG(_logZdaqex," Receiving: "<<m->command()<<" value:"<<m->value());
   // Initialise random data packet
   for (int i=1;i<0x20000;i++) _plrand[i]= std::rand();
-  this->discover();
+  //this->discover();
 }
 void zdaq::example::exServer::configure(zdaq::fsmmessage* m)
 {
@@ -115,8 +115,9 @@ void zdaq::example::exServer::configure(zdaq::fsmmessage* m)
       array_keys.append((det<<16)|sid);
       zdaq::zmSender* ds= new zdaq::zmSender(_context,det,sid);
       //ds->connect(this->parameters()["pushdata"].asString());
-      for (uint32_t i=0;i<_mStream.size();i++)
-	ds->connect(_mStream[i]);
+      ds->autoDiscover(this->configuration(),"BUILDER","collectingPort");
+      //for (uint32_t i=0;i<_mStream.size();i++)
+      //	ds->connect(_mStream[i]);
       ds->collectorRegister();
 
 
@@ -176,12 +177,12 @@ void zdaq::example::exServer::fillEvent(uint32_t event,uint64_t bx,zdaq::zmSende
  */
 void zdaq::example::exServer::checkTrigger(std::vector<zdaq::mon::publishedItem*>& items)
 {
-  LOG4CXX_INFO(_logZdaqex," New trigger burst ");
+  LOG4CXX_DEBUG(_logZdaqex," New trigger burst ");
   // In trigger mode, create fake events according to the message content and publish them
   if (this->parameters()["mode"].asString().compare("ALONE")!=0)
     for (auto x:items)
       {
-	LOG4CXX_INFO(_logZdaqex,"Status "<<x->status());
+	LOG4CXX_DEBUG(_logZdaqex,"Status "<<x->status());
       if (x->hardware().compare("DUMMYTRIGGER")==0)
 	{
 	  
@@ -193,7 +194,7 @@ void zdaq::example::exServer::checkTrigger(std::vector<zdaq::mon::publishedItem*
 	    {
 
 	      if (_event%100==0)
-		LOG4CXX_INFO(_logZdaqex," New event "<<_event<<" "<<_bx<<" "<<psi);
+		LOG4CXX_DEBUG(_logZdaqex," New event "<<_event<<" "<<_bx<<" "<<psi);
 	      for (std::vector<zdaq::zmSender*>::iterator ids=_sources.begin();ids!=_sources.end();ids++)
 		{
 		  this->fillEvent(_event,_bx,(*ids),psi);
@@ -203,7 +204,7 @@ void zdaq::example::exServer::checkTrigger(std::vector<zdaq::mon::publishedItem*
 	    }
 	}
       }
-    LOG4CXX_INFO(_logZdaqex,"End trigger burst ");
+    LOG4CXX_DEBUG(_logZdaqex,"End trigger burst ");
 }
 /**
  * Standalone thread with no external trigger to publish continously data

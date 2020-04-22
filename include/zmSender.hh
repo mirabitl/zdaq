@@ -2,6 +2,7 @@
 #define _ZMSENDER_HH_
 #include <zmq.hpp>
 #include "zmBuffer.hh"
+#include <json/json.h>
 
 namespace zdaq
 {
@@ -78,7 +79,14 @@ public:
     /**
      \brief Data source ID
    */
-  inline uint32_t sourceId(){return _sourceId;} 
+  inline uint32_t sourceId(){return _sourceId;}
+  /**
+     \brief Discover builder application to connact automatically
+     \param config the Json::Value of the configuration
+     \param appname the name of the Event Builder (zmMeger) application
+     \param portname the name of parameter of the appilcation specifying the listening port
+   */
+  void autoDiscover(Json::Value config,std::string appname,std::string portname);
 private:
   zmq::context_t* _context;
   uint32_t _detId,_sourceId;
