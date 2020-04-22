@@ -3,8 +3,7 @@
 #include "baseApplication.hh"
 #include "zPublisher.hh"
 #include "zdaqLogger.hh"
-#include "zSubscriber.hh"
-
+#include "fsmwebCaller.hh"
 
 namespace zdaq {
   namespace example {
@@ -23,7 +22,7 @@ namespace zdaq {
       void c_ntrg(Mongoose::Request &request, Mongoose::JsonResponse &response);
       void c_pause(Mongoose::Request &request, Mongoose::JsonResponse &response);
       bool running(){return _running;}
-      void checkBuilder(std::vector<zdaq::mon::publishedItem*>& items);
+      void findClients();
 
     private:
       bool _running,_readout,_paused,_throttled;
@@ -41,7 +40,8 @@ namespace zdaq {
       // Trigger publication
 
       zdaq::mon::zPublisher* _triggerPublisher;
-      zdaq::mon::zSubscriber* _builderSubscriber;
+
+      std::vector<fsmwebCaller*> _clients;
     };
   };
 };

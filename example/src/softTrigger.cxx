@@ -90,48 +90,59 @@ void zdaq::example::softTrigger::configure(zdaq::fsmmessage* m)
 
     LOG4CXX_INFO(_logZdaqex,"Publisher created: "<<_hardware<<" "<<_location<<" "<<_tcpPort);
     }
-   // Subscribe to the builder info
-  if (this->parameters().isMember("buildsub"))
-    {
-      _builderSubscriber = new  zdaq::mon::zSubscriber(_context); 
-      _builderSubscriber->addHandler(boost::bind(&zdaq::example::softTrigger::checkBuilder, this,_1));
-      
-      _builderSubscriber->addStream(this->parameters()["buildsub"].asString());
-      
-      LOG4CXX_INFO(_logZdaqex," Subscribing: "<<this->parameters()["buildsub"].asString());
-    }
+  this->findClients();
 }
-void zdaq::example::softTrigger::checkBuilder(std::vector<zdaq::mon::publishedItem*>& items)
+
+void zdaq::example::softTrigger::findClients()
 {
-  // In trigger mode, create fake events according to the message content and publish them
+  _clients.clear();
+  if (!this->parameters().isMember("clientname")) return;
+  Json::Value cjs=this->configuration()["HOSTS"];
+  //  std::cout<<cjs<<std::endl;
+  std::vector<std::string> lhosts=this->configuration()["HOSTS"].getMemberNames();
+  // Loop on hosts
+  for (auto host:lhosts)
+    {
+      //std::cout<<" Host "<<host<<" found"<<std::endl;
+      // Loop on processes and find their hots,name and port
+      const Json::Value cjsources=this->configuration()["HOSTS"][host];
+      //std::cout<<cjsources<<std::endl;
+      for (Json::ValueConstIterator it = cjsources.begin(); it != cjsources.end(); ++it)
+	{
+	  const Json::Value& process = *it;
 
-  for (auto x:items)
-    if (x->hardware().compare("builder")==0)
-      {
-	
-	
-	uint32_t built=x->status()["build"].asUInt();
+	  // Loop on environenemntal variable
+	  uint32_t port=0;
+	  const Json::Value& cenv=process["ENV"];
+	  for (Json::ValueConstIterator iev = cenv.begin(); iev != cenv.end(); ++iev)
+	    {
+	      std::string envp=(*iev).asString();
+	      //      std::cout<<"Env found "<<envp.substr(0,7)<<std::endl;
+	      //std::cout<<"Env found "<<envp.substr(8,envp.length()-7)<<std::endl;
+	      if (envp.substr(0,7).compare("WEBPORT")==0)
+		{
+		  port=atol(envp.substr(8,envp.length()-7).c_str());
+		  break;
+		}
+	    }
+	  if (port==0) continue;
 
-	LOG4CXX_INFO(_logZdaqex,"Throttling => builder :"<<built<<" sent "<<_event);
-	uint32_t nh=1000,nl=400;
-	if (_ntrg>100)
-	  {
-	  nh=_ntrg*10;
-	  nl=_ntrg*4;
-	  }
-	
-	if ((_event-built)>nh)
-	  {
-	    _throttled=true;
-	    LOG4CXX_INFO(_logZdaqex,"Throttled => builder :"<<built<<" sent "<<_event);
-	  }
-	if ((_event-built)<nl && _throttled)
-	  {
-	  _throttled=false;
-	  LOG4CXX_INFO(_logZdaqex,"Released => builder :"<<built<<" sent "<<_event);
-	  }
-      }
+	  std::string p_name=process["NAME"].asString();
+	  if (p_name.compare(this->parameters()["clientname"].asString())!=0) continue;
+
+
+	  fsmwebCaller* client= new fsmwebCaller(host,port);
+	  _clients.push_back(client);
+
+
+
+	}
+
+    }
+  
+
 }
+
 
 /**
  * Return the current status of the event number,bx,datasize and period
@@ -157,6 +168,31 @@ void zdaq::example::softTrigger::publishingThread()
   while (_running)
     {
       ::usleep(_microsleep);
+
+      // Check the status of clients
+      bool wait=false;uint32_t nsmax=0;
+      for (auto x=_clients.begin();x!=_clients.end();x++)
+	{
+	  (*x)->sendCommand("STATUS");
+	  
+	  const Json::Value cjsources=(*x)->answer()["answer"]["zmSenders"];
+	  //std::cout<<(*x)->answer()["answer"]<<std::endl;
+	  for (Json::ValueConstIterator it = cjsources.begin(); it != cjsources.end(); ++it)
+	    {
+	      const Json::Value& p = *it;
+	      uint32_t ns=p["event"].asUInt();
+	      if (ns>nsmax) nsmax=ns;
+	      wait=wait || ((_event-ns)>2*_ntrg);
+	    }
+	}
+      if (wait) {
+	LOG4CXX_DEBUG(_logZdaqex," waiting "<<nsmax<<" sent:"<<_event);
+	continue;
+      }
+
+
+
+      //
       if (_paused) continue;
       if (_throttled) continue;
       if (!_running) break;
@@ -167,6 +203,10 @@ void zdaq::example::softTrigger::publishingThread()
 	LOG4CXX_INFO(_logZdaqex,"Publishing "<<this->status()<<" "<<_microsleep);
       _event=_event+_ntrg;
       _bx=_bx+_ntrg;
+
+
+    
+      
     }
 }
 /**
@@ -180,8 +220,6 @@ void zdaq::example::softTrigger::start(zdaq::fsmmessage* m)
   _paused=false;
   _throttled=false;
   _gthr.create_thread(boost::bind(&zdaq::example::softTrigger::publishingThread, this));
-  if (_builderSubscriber!=NULL)
-    _builderSubscriber->start();
 }
 /**
  * RUNNING to CONFIGURED, Stop the publishing thread
@@ -202,8 +240,6 @@ void zdaq::example::softTrigger::stop(zdaq::fsmmessage* m)
   _gthr.join_all();
   _paused=true;
   
-  if (_builderSubscriber!=NULL)
-    _builderSubscriber->stop();
 
 }
 /**

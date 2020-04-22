@@ -271,7 +271,7 @@ class RCClient:
               for e in p["ENV"]:
                   if (e.split("=")[0]=="WEBPORT"):
                       port=int(e.split("=")[1])
-              print p["NAME"]
+              #print p["NAME"]
               if (p["NAME"]=="RUNCONTROL"):
                   self.daqhost=x
                   self.daqport=port
@@ -288,11 +288,11 @@ class RCClient:
                   self.trgport=port
                   if ("PARAMETER" in p):
                       self.daq_par["trigger"]=p["PARAMETER"]
-      print self.trghost,self.trgport
+      #print self.trghost,self.trgport
   def parseConfig(self):
     useAuth=self.login!=None
     dm=self.dm
-    print dm
+    #print dm
     if (dm!=None and dm!="NONE"):
         self.daq_url=dm
         read_conf=None
@@ -316,7 +316,7 @@ class RCClient:
             self.p_conf=read_conf
         return
     dm=os.getenv("DAQFILE","NONE")
-    print dm
+    #print dm
     if (dm!="NONE"):
         self.daq_file=dm
         with open(dm) as data_file:    

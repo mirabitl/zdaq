@@ -30,7 +30,7 @@ namespace zdaq {
     private:
       zdaq::fsmweb* _fsm;
       uint32_t _detid;
-      std::vector<std::string> _vStream;
+      std::map<uint32_t,std::string> _mStream;
       std::vector<zdaq::zmSender*> _sources;
       std::map<uint32_t,uint32_t> _stat;
       bool _running,_readout;
