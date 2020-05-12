@@ -20,13 +20,18 @@ using namespace zdaq;
 binarywriter::binarywriter(std::string dire) : _directory(dire),_run(0),_started(false),_fdOut(-1),_totalSize(0),_event(0),_dummy(false) {}
 void binarywriter::start(uint32_t run)
 {
-  _run=run; 
+  _run=run;
+
+  uint32_t instance=0;
+  char* wp=getenv("INSTANCE");
+  if (wp!=NULL)      instance=atoi(wp);
+
   std::stringstream filename("");    
   char dateStr [64];
             
   time_t tm= time(NULL);
   strftime(dateStr,20,"SMM_%d%m%y_%H%M%S",localtime(&tm));
-  filename<<_directory<<"/"<<dateStr<<"_"<<run<<".dat";
+  filename<<_directory<<"/"<<dateStr<<"_B"<<instance<<"_R"<<run<<".dat";
   _fdOut= ::open(filename.str().c_str(),O_CREAT| O_RDWR | O_NONBLOCK,S_IRWXU);
   if (_fdOut<0)
     {
