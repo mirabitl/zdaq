@@ -239,6 +239,11 @@ void zdaq::example::exServer::start(zdaq::fsmmessage* m)
   std::cout<<"Received "<<m->command()<<std::endl;
   _event=0;
   _running=true;
+
+  // Clear the stats
+  for (auto it=_stat.begin();it!=_stat.end();it++) it->second=0;
+
+  // Check mode
   if (this->parameters()["mode"].asString().compare("ALONE")==0)
     {
       // Standalone all datasources are publishing continously events of fixed size

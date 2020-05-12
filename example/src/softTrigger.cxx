@@ -165,13 +165,8 @@ Json::Value zdaq::example::softTrigger::status()
 void zdaq::example::softTrigger::publishingThread()
 {
   _event=0;
-  while (_running)
-    {
-      ::usleep(_microsleep);
-
-      // Check the status of clients
-      bool wait=false;uint32_t nsmax=0;
-      for (auto x=_clients.begin();x!=_clients.end();x++)
+  uint32_t ns0=0;
+  for (auto x=_clients.begin();x!=_clients.end();x++)
 	{
 	  (*x)->sendCommand("STATUS");
 	  
@@ -180,13 +175,33 @@ void zdaq::example::softTrigger::publishingThread()
 	  for (Json::ValueConstIterator it = cjsources.begin(); it != cjsources.end(); ++it)
 	    {
 	      const Json::Value& p = *it;
+	      ns0=p["event"].asUInt();
+	      break;
+	    }
+	}
+  while (_running)
+    {
+      ::usleep(_microsleep);
+
+      // Check the status of clients
+      bool wait=false;
+      uint32_t nsmax=0;
+      for (auto x=_clients.begin();x!=_clients.end();x++)
+	{
+	  (*x)->sendCommand("STATUS");
+
+	  const Json::Value cjsources=(*x)->answer()["answer"]["zmSenders"];
+	  //std::cout<<(*x)->answer()["answer"]<<std::endl;
+	  for (Json::ValueConstIterator it = cjsources.begin(); it != cjsources.end(); ++it)
+	    {
+	      const Json::Value& p = *it;
 	      uint32_t ns=p["event"].asUInt();
 	      if (ns>nsmax) nsmax=ns;
-	      wait=wait || ((_event-ns)>2*_ntrg);
+	      wait=wait || ((_event-(ns-ns0))>2*_ntrg);
 	    }
 	}
       if (wait) {
-	LOG4CXX_DEBUG(_logZdaqex," waiting "<<nsmax<<" sent:"<<_event);
+	LOG4CXX_INFO(_logZdaqex,ns0<<" waiting "<<nsmax<<" sent:"<<_event);
 	continue;
       }
 
