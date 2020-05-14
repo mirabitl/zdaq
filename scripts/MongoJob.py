@@ -83,8 +83,12 @@ class MongoJob:
         """
         res=self.db.runs.find({})
         for x in res:
-            if ("comment" in x):
-                print time.ctime(x["time"]),x["location"],x["run"],x["comment"]
+            if ("run" in x):
+                if ("comment" in x and "time" in x):
+                    print time.ctime(x["time"]),x["location"],x["run"],x["comment"]
+                else:
+                    if ("run" in x):
+                        print x["location"],x["run"],x["comment"]
                 #print x["time"],x["location"],x["run"],x["comment"]
     def runInfo(self,run,loc):
         """
@@ -92,6 +96,7 @@ class MongoJob:
         """
         res=self.db.runs.find({"run":run,"location":loc})
         for x in res:
+
             if ("comment" in x):
                 print x["time"],x["location"],x["run"],x["comment"]
             return x
