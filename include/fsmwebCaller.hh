@@ -68,7 +68,10 @@ public:
      \details it fills the _answer private Json::Value with the return value of the query
    */
   std::string sendCommand(std::string name,std::string params=std::string(""));
-  
+
+
+  std::string sendCommand(std::string name,Json::Value params);
+
   Json::Value answer();///< Value of the _answer private Json::Value
 
   std::string url(){return _url;}
