@@ -213,4 +213,48 @@ std::string fsmwebCaller::sendCommand(std::string name,std::string params)
 
 
   }
+
+std::string fsmwebCaller::sendCommand(std::string name,Json::Value params)
+{
+  Json::FastWriter fastWriter;
+
+  std::stringstream s;
+  s<<_url<<"CMD?name="<<name;
+  if (params!=Json::Value::null)
+    for( Json::Value::iterator itr = params.begin() ; itr != params.end() ; itr++ ) {
+            // Print depth.
+      Json::Value p=*itr;
+      if (p.isUInt())
+	s<<"&"<<itr.key().asString()<<"="<<p.asUInt();
+      else
+	if (p.isInt())
+	  s<<"&"<<itr.key().asString()<<"="<<p.asInt();
+	else
+	  if (p.isDouble())
+	    s<<"&"<<itr.key().asString()<<"="<<p.asDouble();
+	  else
+	    {
+	      std::string sc=fastWriter.write(p);
+	      char out[4096];
+	      url_encoder_rfc_tables_init();
+		
+	      url_encode( html5,(unsigned char*) sc.c_str(),out);
+	      s<<"&"<<itr.key().asString()<<"="<<out;
+	      }
+
+    }
+  std::string rc=fsmwebCaller::curlQuery((char*) s.str().c_str());
+  //std::cout<<"SC received "<<rc<<std::endl;
+  Json::Reader reader;
+  Json::Value jsta;
+  bool parsingSuccessful = reader.parse(rc,jsta);
+  if (parsingSuccessful)
+    {
+      //std::cout<<"SC parsing sucess"<<jsta<<std::endl;
+      _answer=jsta;
+    }
+  else 
+    _answer=Json::Value::null;
+  return rc;
+}
 Json::Value fsmwebCaller::answer(){return _answer;}
