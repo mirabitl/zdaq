@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python3
 import os
 from pymongo import MongoClient
 import json
@@ -16,7 +16,7 @@ def IP2Int(ip):
     :param IP: the IP address
     :return: the encoded integer 
     """
-    o = map(int, ip.split('.'))
+    o = list(map(int, ip.split('.')))
     res = (16777216 * o[3]) + (65536 * o[2]) + (256 * o[1]) + o[0]
     return res
 
@@ -67,7 +67,7 @@ class MongoJob:
         s["comment"]=comment
         s["version"]=version
         resconf=self.db.configurations.insert_one(s)
-        print resconf
+        print(resconf)
 
     def configurations(self):
         """
@@ -76,7 +76,7 @@ class MongoJob:
         res=self.db.configurations.find({})
         for x in res:
             if ("comment" in x):
-                print time.ctime(x["time"]),x["version"],x["name"],x["comment"]
+                print(time.ctime(x["time"]),x["version"],x["name"],x["comment"])
     def runs(self):
         """
         List all the run informations stored
@@ -85,11 +85,11 @@ class MongoJob:
         for x in res:
             if ("run" in x):
                 if ("comment" in x and "time" in x):
-                    print time.ctime(x["time"]),x["location"],x["run"],x["comment"]
+                    print(time.ctime(x["time"]),x["location"],x["run"],x["comment"])
                 else:
                     if ("run" in x):
-                        print x["location"],x["run"],x["comment"]
-                #print x["time"],x["location"],x["run"],x["comment"]
+                        print(x["location"],x["run"],x["comment"])
+                #print(x["time"],x["location"],x["run"],x["comment"])
     def runInfo(self,run,loc):
         """
         Eun info on a given run
@@ -98,7 +98,7 @@ class MongoJob:
         for x in res:
 
             if ("comment" in x):
-                print x["time"],x["location"],x["run"],x["comment"]
+                print(x["time"],x["location"],x["run"],x["comment"])
             return x
         return None
     def downloadConfig(self,cname,version,toFileOnly=False):
@@ -112,11 +112,11 @@ class MongoJob:
         os.system("mkdir -p /dev/shm/mgjob")
         fname="/dev/shm/mgjob/%s_%s.json" % (cname,version)
         if os.path.isfile(fname) and toFileOnly:
-            #print '%s already download, Exiting' % fname
+            #print('%s already download, Exiting' % fname)
             return
         res=self.db.configurations.find({'name':cname,'version':version})
         for x in res:
-            print x["name"],x["version"],x["comment"]
+            print(x["name"],x["version"],x["comment"])
             #var=raw_input()
             slc=x["content"]
             os.system("mkdir -p /dev/shm/mgjob")
@@ -137,7 +137,7 @@ class MongoJob:
         res=self.db.runs.find({'location':location})
         runid={}
         for x in res:
-            #print x["location"],x["run"],x["comment"]
+            #print(x["location"],x["run"],x["comment"])
             #var=raw_input()
             runid=x
         if ("location" in runid):
@@ -154,7 +154,7 @@ class MongoJob:
         f.write(json.dumps(runid, indent=2, sort_keys=True))
         f.close()
         resconf=self.db.runs.insert_one(runid)
-        print resconf
+        print(resconf)
         return runid
  
      
@@ -169,7 +169,7 @@ def instance():
     # create the default access
     login=os.getenv("MGDBLOGIN","NONE")
     if (login == "NONE"):
-        print "The ENV varaible MGDBLOGIN=user/pwd@host:port@dbname mut be set"
+        print("The ENV varaible MGDBLOGIN=user/pwd@host:port@dbname mut be set")
         exit(0)
     userinfo=login.split("@")[0]
     hostinfo=login.split("@")[1]
@@ -178,7 +178,7 @@ def instance():
     pwd=userinfo.split("/")[1]
     host=hostinfo.split(":")[0]
     port=int(hostinfo.split(":")[1])
-    #print host,port,dbname,user,pwd
+    #print(host,port,dbname,user,pwd)
     _wdd=MongoJob(host,port,dbname,user,pwd)
-    #print "apres"
+    #print("apres")
     return _wdd

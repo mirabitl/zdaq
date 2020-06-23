@@ -1,11 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import os
 import socks
 import socket
-import httplib
-import urllib
-import urllib2
-from urllib2 import URLError, HTTPError
 import json
 from copy import deepcopy
 import base64
@@ -16,7 +12,7 @@ import MongoJob as mg
 import sys
 
 
-#print "COUCOU"
+#print("COUCOU")
 parser = argparse.ArgumentParser()
 
 # configure all the actions
@@ -49,7 +45,7 @@ if len(sys.argv)==1:
 
 results = parser.parse_args()
 # create the default access
-#print "COUCOU"
+#print("COUCOU")
 
 _wdd=mg.instance()
 
@@ -64,17 +60,17 @@ if (results.upload_config):
     version=1
     comment="No comment given"
     if (results.name == None):
-        print 'Please specify the name --name=name'
+        print('Please specify the name --name=name')
         exit(0)
     if (results.file == None):
-        print 'Please specify the file --file=ver'
+        print('Please specify the file --file=ver')
         exit(0)
     if (results.version != None):
        version=results.version
-       #print version
+       #print(version)
     if (results.comment != None):
        comment=results.comment
-       #print comment
+       #print(comment)
     _wdd.uploadConfig(results.name,results.file,comment,version)
     exit(0)
 
@@ -86,12 +82,12 @@ if (results.download):
     
     if (results.name != None):
         if (results.version == None):
-            print 'Please specify the version --version=ver'
+            print('Please specify the version --version=ver')
             exit(0)
         _wdd.downloadConfig(results.name,results.version,True)
         exit(0)
     else:
-        print " Specify  --name for configuration "
+        print(" Specify  --name for configuration ")
         exit(0)
 
 if (results.configurations):
@@ -106,10 +102,10 @@ if (results.runs):
 if (results.new_run):
     comment="No comment given"
     if (results.location == None):
-        print 'Please specify the setup --location=name'
+        print('Please specify the setup --location=name')
         exit(0)
     if (results.comment != None):
        comment=results.comment
-       #print comment
+       #print(comment)
     _wdd.getRun(results.location,comment)
     exit(0)
