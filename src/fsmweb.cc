@@ -34,8 +34,16 @@ void fsmweb::start(uint32_t port)
   sw.str(std::string());
   s0<<"/FSM/"<<_name<<"/WEB";
   char hostname[80];
-  gethostname(hostname,80);
-  sw<<"http://"<<hostname<<":"<<port<<"/"<<_name;
+  char* nickname=getenv("NICKNAME");
+  std::string shost;
+  if (nickname!=NULL)
+    shost=nickname;
+  else
+    {
+      gethostname(hostname,80);
+      shost=hostname;
+    }
+  sw<<"http://"<<shost<<":"<<port<<"/"<<_name;
   _webName=sw.str();
  
   g_d.create_thread(boost::bind(&fsmweb::serving,this,port));
