@@ -73,10 +73,13 @@ class MongoJob:
         """
         List all the configurations stored
         """
+        cl=[]
         res=self.db.configurations.find({})
         for x in res:
             if ("comment" in x):
                 print(time.ctime(x["time"]),x["version"],x["name"],x["comment"])
+                cl.append((x["name"],x['version'],x['comment']))
+        return cl
     def runs(self):
         """
         List all the run informations stored
