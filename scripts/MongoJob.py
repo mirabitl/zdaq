@@ -104,6 +104,61 @@ class MongoJob:
                 print(x["time"],x["location"],x["run"],x["comment"])
             return x
         return None
+
+    def setFsmInfo(self,name,version,location,job=None,daq=None):
+        """
+        fsm info insertion
+        :param name: Configuration name
+        :param version: Configuration version
+        :param location: Setup name
+        :param job: job state name or none
+        :param daq: daq state name or none
+        """
+        s=self.fsmInfo(name,version,location)
+        if (s == None):
+            s={}
+            s["name"]=name
+            s["location"]=location
+            s["version"]=version
+            s["job"]="NOTSET"
+            s["daq"]="NOTSET"
+        else:
+            del s["_id"]
+        s["time"]=time.time()
+        if (job!=None):
+            s["job"]=job
+        if (daq!=None):
+            s["daq"]=daq
+        resconf=self.db.fsm.insert_one(s)
+        print(resconf)
+
+    def fsmInfo(self,name,version,location):
+        """
+        Get FSM's information for a given configuration and setup
+        :param name: Configuration name
+        :param version: Configuration version
+        :param location: Setup name
+        """
+        res=self.db.fsm.find({"name":name,"version":version,"location":location})
+        last={}
+        last["time"]=0
+        for x in res:
+            print(x["name"],x["version"],x["location"],x["time"],x["job"],x["daq"])
+            if (x["time"]>last["time"]):
+                last=x
+        if (last["time"]!=0):
+            return last
+        else:
+            return None
+
+    def fsms(self):
+        """
+        Get FSM's informations dump
+        """
+        res=self.db.fsm.find({})
+        for x in res:
+            print(x["name"],x["version"],x["location"],x["time"],x["job"],x["daq"])
+
     def downloadConfig(self,cname,version,toFileOnly=False):
         """
         Download a jobcontrol configuration to /dev/shm/mgjob/ directory
