@@ -25,6 +25,7 @@ grp_action.add_argument('--download', action='store_true',
 
 
 grp_action.add_argument('--runs', action='store_true',help='List all the taken runs')
+grp_action.add_argument('--fsms', action='store_true',help='List all the acquisition status')
 grp_action.add_argument('--new-run', action='store_true',help='Find last run of a given setup (--location setup) and fill the lastrun.sjon with the next runid Optional: --comment=xxxx')
 
 
@@ -97,6 +98,10 @@ if (results.configurations):
 
 if (results.runs):
     _wdd.runs()
+    exit(0)
+
+if (results.fsms):
+    _wdd.fsms()
     exit(0)
 
 if (results.new_run):

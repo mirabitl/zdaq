@@ -143,7 +143,7 @@ class MongoJob:
         last={}
         last["time"]=0
         for x in res:
-            print(x["name"],x["version"],x["location"],x["time"],x["job"],x["daq"])
+            #print(x["name"],x["version"],x["location"],x["time"],x["job"],x["daq"])
             if (x["time"]>last["time"]):
                 last=x
         if (last["time"]!=0):
@@ -157,7 +157,7 @@ class MongoJob:
         """
         res=self.db.fsm.find({})
         for x in res:
-            print(x["name"],x["version"],x["location"],x["time"],x["job"],x["daq"])
+            print(x["name"],x["version"],x["location"],time.ctime(x["time"]),x["job"],x["daq"])
 
     def downloadConfig(self,cname,version,toFileOnly=False):
         """
