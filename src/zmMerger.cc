@@ -22,7 +22,7 @@
 #include <sstream>
 
 using namespace zdaq;
-zmMerger::zmMerger(zmq::context_t* c) : zmPuller(c), _running(false),_nDifs(0),_purge(false)
+zmMerger::zmMerger(zmq::context_t* c) : zmPuller(c), _running(false),_nDifs(0),_purge(false),_writeHeader(false)
 {
   _eventMap.clear();
   _processors.clear();
@@ -111,9 +111,14 @@ void zmMerger::processEvent(uint32_t idx)
   //std::cout<<"full  event find " <<it->first<<std::endl;
   for (std::vector<zdaq::zmprocessor*>::iterator itp=_processors.begin();itp!=_processors.end();itp++)
     {
+
+      if (_writeHeader)
+	{
+	  (*itp)->processRunHeader(_runHeader); 
+	}
       (*itp)->processEvent(it->first,it->second);
     }
-
+  _writeHeader=false;
   
   // remove completed events
   // for (std::vector<zdaq::buffer*>::iterator iv=it->second.begin();iv!=it->second.end();iv++) delete (*iv);
@@ -134,12 +139,15 @@ void zmMerger::processEvent(uint32_t idx)
 }
 void zmMerger::processRunHeader()
 {
+  _writeHeader=true;
+  /*
   for (std::vector<zdaq::zmprocessor*>::iterator itp=_processors.begin();itp!=_processors.end();itp++)
     {
       //std::cout<<"On enevoie"<<std::endl;
       (*itp)->processRunHeader(_runHeader);
       //std::cout<<"Apres enevoie"<<std::endl;
     }
+  */
 }
 void zmMerger::loadParameters(Json::Value params)
 {
