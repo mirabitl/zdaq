@@ -38,7 +38,13 @@ void binarywriter::start(uint32_t run)
       perror("No way to store to file :");
       //std::cout<<" No way to store to file"<<std::endl;
       return;
-    }  
+    }
+
+   char mode[] = "0744";
+   int im;
+   im = strtol(mode, 0, 8);
+   
+   int ier=chmod(filename.str().c_str(),im);
   _event=0;
   _started=true;
 }

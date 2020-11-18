@@ -68,6 +68,9 @@ void zdaq::example::exBuilder::configure(zdaq::fsmmessage* m)
   if (jc.isMember("dsnumber"))
     _merger->setNumberOfDataSource(jc["dsnumber"].asInt());
   
+  if (jc.isMember("purge"))
+    _merger->setPurge(jc["purge"].asInt()!=0);
+  
     
   const Json::Value& books = jc["stream"];
   Json::Value array_keys;

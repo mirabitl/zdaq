@@ -22,7 +22,7 @@
 #include <sstream>
 
 using namespace zdaq;
-zmMerger::zmMerger(zmq::context_t* c) : zmPuller(c), _running(false),_nDifs(0),_purge(false)
+zmMerger::zmMerger(zmq::context_t* c) : zmPuller(c), _running(false),_nDifs(0),_purge(true)
 {
   _eventMap.clear();
   _processors.clear();
@@ -201,6 +201,7 @@ void zmMerger::stop()
 void  zmMerger::processData(std::string idd,zmq::message_t *message)
 {
   //printf("Processing %s  Map size %d \n",idd.c_str(),_eventMap.size());
+
   if (this->registered())
   _nDifs=this->registered();
   uint32_t detid,sid,gtc;
@@ -208,7 +209,8 @@ void  zmMerger::processData(std::string idd,zmq::message_t *message)
   sscanf(idd.c_str(),"DS-%d-%d %d %ld",&detid,&sid,&gtc,&bx);
   //fprintf(stderr,"Message %s DS-%d-%d %d %ld\n",idd.c_str(),detid,sid,gtc,bx);
   std::map<uint64_t,std::vector<zdaq::buffer*> >::iterator it_gtc=_eventMap.find(gtc);
-
+  if (gtc%20==0)
+      LOG4CXX_INFO(_logZdaq,"Event Map size "<<_eventMap.size());
   zdaq::buffer *b = new zdaq::buffer(512*1024);
   // uint32_t* iptr=(uint32_t*) message->data();
   //   uint8_t* cptr=(uint8_t*) message->data();
@@ -266,6 +268,8 @@ void  zmMerger::processData(std::string idd,zmq::message_t *message)
    // Clear old uncompleted event
    if (_purge)
      {
+       if (gtc%20==0)
+	 LOG4CXX_INFO(_logZdaq,"PURGING size "<<_eventMap.size());
        for (std::map<uint64_t,std::vector<zdaq::buffer*> >::iterator it=_eventMap.begin();it!=_eventMap.end();)
 	 {
 	  
@@ -279,15 +283,16 @@ void  zmMerger::processData(std::string idd,zmq::message_t *message)
 	   else
 	     it++;
 	 }
-       // Force purge if size>1000
-       if (_eventMap.size()>1000)
+       // Force purge if size>200
+       if (_eventMap.size()>200)
 	 {
+	   LOG4CXX_INFO(_logZdaq,"REAL PURGING size "<<_eventMap.size());
 	   for (std::map<uint64_t,std::vector<zdaq::buffer*> >::iterator it=_eventMap.begin();it!=_eventMap.end();)
 	     {
 	  
 	       if (it->first>1)
 		 {
-		   //std::cout<<"Deleting Event "<<it->first<<" Last gtc "<<lastgtc<<std::endl; 
+		   std::cout<<"Deleting Event "<<it->first<<" Last gtc "<<lastgtc<<" size "<<it->second.size()<< std::endl; 
 		   for (std::vector<zdaq::buffer*>::iterator iv=it->second.begin();iv!=it->second.end();iv++) delete (*iv);
 		   it->second.clear();
 		   _eventMap.erase(it++);
@@ -295,6 +300,7 @@ void  zmMerger::processData(std::string idd,zmq::message_t *message)
 	       else
 		 it++;
 	     }
+	   LOG4CXX_INFO(_logZdaq,"END PURGING size "<<_eventMap.size());
 	 }
      }
   // Fill summary

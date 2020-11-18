@@ -95,7 +95,7 @@ INCLUDES=["../include",'include',"/usr/include/boost141/","/usr/include/jsoncpp"
 INCLUDES.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.get_python_inc()'"))
 
   
-CPPFLAGS=["-pthread","-O2","-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN__ ", "-Dx86",  "-DXERCES=2", "-DDAQ_VERSION_2","-std=c++11"]
+CPPFLAGS=["-pthread","-g","-O2","-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN__ ", "-Dx86",  "-DXERCES=2", "-DDAQ_VERSION_2","-std=c++11"]
 LIBRARIES=['pthread', 'm', 'z','stdc++',boostsystem,boostthread,'curl','zmq','jsoncpp','log4cxx','zdaq']
 
 
