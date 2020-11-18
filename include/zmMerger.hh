@@ -204,7 +204,7 @@ namespace zdaq {
     std::map<uint64_t,std::vector<zdaq::buffer*> > _eventMap;
 	
     boost::thread_group _gThread;
-    bool _running,_purge;
+    bool _running,_purge,_writeHeader;
     uint32_t _run,_evt,_build,_totalSize,_compressedSize;
     
     std::vector<uint32_t> _runHeader;
