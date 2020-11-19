@@ -197,6 +197,10 @@ namespace zdaq {
        \brief Allow (true) to purge old uncompleted event
      */
     void setPurge(bool t){_purge=t;}
+    /**
+       \brief Set event number when the run header will be written
+     */
+    void setRunHeaderEvent(int32_t n){_nextEventHeader=n;}
   private:
     bool _useEventId;
     uint32_t _nDifs;
@@ -206,7 +210,7 @@ namespace zdaq {
     boost::thread_group _gThread;
     bool _running,_purge,_writeHeader;
     uint32_t _run,_evt,_build,_totalSize,_compressedSize;
-    
+    int32_t _nextEventHeader;
     std::vector<uint32_t> _runHeader;
 
     std::map<std::string,uint64_t> _mReceived;

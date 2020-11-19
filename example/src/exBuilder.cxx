@@ -184,6 +184,7 @@ void zdaq::example::exBuilder::c_setheader(Mongoose::Request &request, Mongoose:
 {
 
   if (_merger==NULL)    {response["STATUS"]="NO EVB created"; return;}
+  int32_t nextevent=atoi(request.get("nextevent","-1").c_str());
   std::string shead=request.get("header","None");
   if (shead.compare("None")==0)
     {response["STATUS"]="NO header provided "; return;}
@@ -201,6 +202,8 @@ void zdaq::example::exBuilder::c_setheader(Mongoose::Request &request, Mongoose:
 
   //std::cout<<jdevs<<std::endl;
   //  std::cout<<" LOL "<<std::endl;
+  if (nextevent!=-1)
+    _merger->setRunHeaderEvent(nextevent);
   _merger->processRunHeader();
   //  std::cout<<" LOL AGAIN "<<std::endl;
   response["STATUS"]="DONE";

@@ -22,7 +22,7 @@
 #include <sstream>
 
 using namespace zdaq;
-zmMerger::zmMerger(zmq::context_t* c) : zmPuller(c), _running(false),_nDifs(0),_purge(true),_writeHeader(false)
+zmMerger::zmMerger(zmq::context_t* c) : zmPuller(c), _running(false),_nDifs(0),_purge(true),_writeHeader(false),_nextEventHeader(-1)
 {
   _eventMap.clear();
   _processors.clear();
@@ -114,11 +114,16 @@ void zmMerger::processEvent(uint32_t idx)
 
       if (_writeHeader)
 	{
-	  (*itp)->processRunHeader(_runHeader); 
+	  if (_nextEventHeader>0 && _nextEventHeader==idx)
+	    {
+	      (*itp)->processRunHeader(_runHeader);
+	      _writeHeader=false;
+	      _nextEventHeader=-1;
+	    }
 	}
       (*itp)->processEvent(it->first,it->second);
     }
-  _writeHeader=false;
+
   
   // remove completed events
   // for (std::vector<zdaq::buffer*>::iterator iv=it->second.begin();iv!=it->second.end();iv++) delete (*iv);
