@@ -1,40 +1,34 @@
 #ifndef _zdaq_localCollector_h
 #define _zdaq_localCollector_h
+#include "baseApplication.hh"
+#include "zmMerger.hh"
+#include "binarywriter.hh"
+#include "zdaqLogger.hh"
 
-#include <stdint.h>
-#include <stdlib.h>
-#include "zmBuffer.hh"
-#include "zmPuller.hh"
-#include <vector>
-#include <map>
-#include <string>
-#include <boost/function.hpp>
-#include <boost/thread.hpp>
-#include <boost/bind.hpp>
-#include <json/json.h>
+namespace zdaq
+{
+  namespace builder {
+    class collector : public zdaq::baseApplication {
+    public:
+      collector(std::string name);
+      void configure(zdaq::fsmmessage* m);
+      void start(zdaq::fsmmessage* m);
+      void stop(zdaq::fsmmessage* m);
+      void halt(zdaq::fsmmessage* m);
+      void destroy(zdaq::fsmmessage* m);
 
-#include <boost/interprocess/sync/interprocess_mutex.hpp>
-namespace zdaq {
- 
-  class localCollector : public zmPuller
-  {
-  public:
+      void status(Mongoose::Request &request, Mongoose::JsonResponse &response);
 
-    localCollector(zmq::context_t* c);
-    ~localCollector();
-    void virtual processData(std::string idd,zmq::message_t *message);
-    void scanMemory();
-    void registerBuilder(std::string name);
-    void registerDataSource(std::string url);
+      void c_setheader(Mongoose::Request &request, Mongoose::JsonResponse &response);
+      void c_purge(Mongoose::Request &request, Mongoose::JsonResponse &response);
 
-    void start(uint32_t nr);
-    void stop();
-    Json::Value status();
-  private:
-    std::vector<zmq::socket_t* > _builders;
-    boost::thread_group _gThread;
-    bool _running;
-    uint32_t _run,_evt,_packet;
+    private:
+      zdaq::zmMerger* _merger;
+      bool _running,_readout;
+      zmq::context_t* _context;
+    };
   };
 };
 #endif
+
+

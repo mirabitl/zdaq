@@ -1,137 +1,193 @@
-#include <dlfcn.h>
-
-
 #include "localCollector.hh"
-#include "zdaqLogger.hh"
-#include <time.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <sys/dir.h>  
-#include <sys/param.h>  
-#include <stdio.h>  
-#include <stdlib.h>  
-#include <unistd.h>  
-#include <string.h>
-#include <stdint.h>
-#include <fcntl.h>
-#include <iostream>
-#include <sstream>
 
 using namespace zdaq;
-localCollector::localCollector(zmq::context_t* c) : zmPuller(c), _running(false)
+using namespace zdaq::builder;
+
+zdaq::builder::collector::collector(std::string name) : zdaq::baseApplication(name), _running(false), _merger(NULL)
 {
-  _builders.clear();
+  // Create the context and the merger
+  _context = new zmq::context_t();
+  _merger = new zdaq::zmMerger(_context);
 
-}
-localCollector::~localCollector()
-{
-  
-}
+  // Register state
+  this->fsm()->addState("CREATED");
+  this->fsm()->addState("CONFIGURED");
+  this->fsm()->addState("RUNNING");
 
-void  localCollector::registerBuilder(std::string name)
-{
+  // Register transitions
+  this->fsm()->addTransition("CONFIGURE", "CREATED", "CONFIGURED", boost::bind(&zdaq::builder::collector::configure, this, _1));
+  this->fsm()->addTransition("CONFIGURE", "CONFIGURED", "CONFIGURED", boost::bind(&zdaq::builder::collector::configure, this, _1));
+  this->fsm()->addTransition("START", "CONFIGURED", "RUNNING", boost::bind(&zdaq::builder::collector::start, this, _1));
+  this->fsm()->addTransition("STOP", "RUNNING", "CONFIGURED", boost::bind(&zdaq::builder::collector::stop, this, _1));
+  this->fsm()->addTransition("HALT", "RUNNING", "CREATED", boost::bind(&zdaq::builder::collector::halt, this, _1));
+  this->fsm()->addTransition("HALT", "CONFIGURED", "CREATED", boost::bind(&zdaq::builder::collector::halt, this, _1));
 
-  zmq::socket_t* s=new zmq::socket_t((*_context),ZMQ_PUSH);
-  
-  s->setsockopt(ZMQ_SNDHWM,128);
-  s->connect(name);
-  _builders.push_back(s);
-}
+  // Standalone command
+  this->fsm()->addCommand("STATUS", boost::bind(&zdaq::builder::collector::status, this, _1, _2));
+  this->fsm()->addCommand("SETHEADER", boost::bind(&zdaq::builder::collector::c_setheader, this, _1, _2));
+  this->fsm()->addCommand("PURGE", boost::bind(&zdaq::builder::collector::c_purge, this, _1, _2));
 
-
-
-void localCollector::registerDataSource(std::string url)
-{
-  
-  LOG4CXX_INFO(_logZdaq,"Adding input Stream "<<url);
-
-  this->addInputStream(url,true);
-}
-
-
-
-
-void localCollector::loadParameters(Json::Value params)
-{
-  
-}
-    
-void localCollector::start(uint32_t nr)
-{
-  // Do the start of the the processors
-  _run=nr;
-  _evt=0;
-  _packet=0;
-
-  LOG4CXX_INFO(_logZdaq,"run : "<<_run<<" localCollector START for "<<numberOfDataSource()<<" sources");
-  for (std::vector<zdaq::zmprocessor*>::iterator itp=_processors.begin();itp!=_processors.end();itp++)
-    {
-      (*itp)->start(nr);
-    }
-
-  _running=true;
-  _gThread.create_thread(boost::bind(&zdaq::localCollector::scanMemory, this));
-  //_gThread.create_thread(boost::bind(&zdaq::localCollector::processEvents, this));
-
-}
-void localCollector::scanMemory()
-{
-  this->enablePolling();
-  this->poll();
-}
-void localCollector::stop()
-{
-  _running=false;
-  this->disablePolling();
-  LOG4CXX_INFO(_logZdaq,"Stopping the threads");
-  //  printf("ZmMeger =>Stopping the threads \n");
-  _gThread.join_all();
-
-
-  LOG4CXX_INFO(_logZdaq,"Leaving Stop method");
-
-}
-void  localCollector::processData(std::string idd,zmq::message_t *message)
-{
-  bool registering=(idd.compare(0,2,"ID") == 0);
-
-  uint32_t detid,sid,gtc;
-  uint64_t bx;
-  if (!registering)
+  //Start server
+  char *wp = getenv("WEBPORT");
+  if (wp != NULL)
   {
-    sscanf(idd.c_str(),"DS-%d-%d %d %ld",&detid,&sid,&gtc,&bx);
-     uint32_t ib=gtc%_builders.size();
-  	 s_sendmore((*_builders[ib]),idd);
-		_builders[ib]->send(message);
-    _evt=gtc;
-    _packet++;
+    LOG4CXX_INFO(_logZdaqex, __PRETTY_FUNCTION__ << "Service " << name << " started on port " << atoi(wp));
+    this->fsm()->start(atoi(wp));
+  }
+}
+
+void zdaq::builder::collector::configure(zdaq::fsmmessage *m)
+{
+  LOG4CXX_INFO(_logZdaqex, __PRETTY_FUNCTION__ << "Received " << m->command() << " Value " << m->value());
+  // Store message content in paramters
+
+  if (m->content().isMember("collectingPort"))
+  {
+    this->parameters()["collectingPort"] = m->content()["collectingPort"];
+  }
+  if (m->content().isMember("processor"))
+  {
+    this->parameters()["processor"] = m->content()["processor"];
+  }
+  // Check that needed parameters exists
+
+  if (!this->parameters().isMember("collectingPort"))
+  {
+    LOG4CXX_ERROR(_logZdaqex, "Missing collectingPort,no data stream");
+    return;
+  }
+  if (!this->parameters().isMember("processor"))
+  {
+    LOG4CXX_ERROR(_logZdaqex, "Missing processor, list of processing pluggins");
+    return;
+  }
+
+  // register data source and processors
+  Json::Value jc = this->parameters();
+  if (jc.isMember("purge"))
+    _merger->setPurge(jc["purge"].asInt() != 0);
+
+  // Register the data source
+  std::stringstream st("");
+  st<<"tcp://*:"<<jc["collectingPort"].asUInt();
+  LOG4CXX_INFO(_logZdaqex, "Registering " << st.str());
+  _merger->registerDataSource(st.str());
+  array_keys.append(st.str());
+
+  // Register the processors
+  const Json::Value &pbooks = jc["processor"];
+  Json::Value parray_keys;
+  for (Json::ValueConstIterator it = pbooks.begin(); it != pbooks.end(); ++it)
+  {
+    const Json::Value &book = *it;
+    LOG4CXX_INFO(_logZdaqex, "registering " << (*it).asString());
+    _merger->registerProcessor((*it).asString());
+    parray_keys.append((*it).asString());
+  }
+
+  LOG4CXX_INFO(_logZdaqex, " Setting parameters for processors and merger ");
+  _merger->loadParameters(jc);
+
+  
+  // Overwrite msg
+  //Prepare complex answer
+  Json::Value prep;
+  prep["sourceRegistered"] = array_keys;
+  prep["processorRegistered"] = parray_keys;
+
+  m->setAnswer(prep);
+  LOG4CXX_DEBUG(_logZdaqex, "end of configure");
+  return;
+}
+
+void zdaq::builder::collector::start(zdaq::fsmmessage *m)
+{
+  LOG4CXX_DEBUG(_logZdaqex, "Received " << m->command() << " Value " << m->value());
+  Json::Value jc = m->content();
+  _merger->start(jc["run"].asInt());
+  _running = true;
+
+  LOG4CXX_INFO(_logZdaqex, "Builder Run " << jc["run"].asInt() << " is started ");
+}
+void zdaq::builder::collector::stop(zdaq::fsmmessage *m)
+{
+  LOG4CXX_DEBUG(_logZdaqex, "Received " << m->command() << " Value " << m->value());
+  _merger->stop();
+  _running = false;
+  LOG4CXX_INFO(_logZdaqex, "Builder is stopped \n");
+  fflush(stdout);
+}
+void zdaq::builder::collector::halt(zdaq::fsmmessage *m)
+{
+
+  LOG4CXX_DEBUG(_logZdaqex, "Received " << m->command());
+  if (_running)
+    this->stop(m);
+
+  LOG4CXX_INFO(_logZdaqex, "Destroying Builder Sources");
+  //stop data sources
+  _merger->clear();
+}
+void zdaq::builder::collector::status(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+
+  if (_merger != NULL)
+  {
+
+    response["answer"] = _merger->status();
   }
   else
-  {
-    sscanf(idd.c_str(),"ID-%d-%d %d %ld",&detid,&sid,&gtc,&bx);
-    for (auto x=_builders.begin();x!=_builders.end();x++)
-    {
-      s_sendmore((*x),idd);
-      x->setNumberOfDataSource(message);
-    }
-  }
-
- 
-  
+    response["answer"] = "NO merger created yet";
 }
 
-
-Json::Value localCollector::status()
+void zdaq::builder::collector::c_purge(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
-  Json::Value jrep,jsta;
-  jsta["run"]=_run;
-  jsta["event"]=_evt;
-  jsta["packet"]=_packet;
-  jsta["running"]=_running;
- 
-  return jsta;
+  if (_merger != NULL)
+  {
+    LOG4CXX_INFO(_logZdaqex, "Setting Purge flag to "<<request.get("active", "0"));
+
+    _merger->setPurge(atoi(request.get("active", "0").c_str()) != 0);
+    response["answer"] = atoi(request.get("active", "0").c_str());
+  }
+  else
+    response["answer"] = "NO merger created yet";
 }
+void zdaq::builder::collector::c_setheader(Mongoose::Request &request, Mongoose::JsonResponse &response)
+{
+
+  if (_merger == NULL)
+  {
+    response["STATUS"] = "NO EVB created";
+    return;
+  }
+  int32_t nextevent = atoi(request.get("nextevent", "-1").c_str());
+  std::string shead = request.get("header", "None");
+  if (shead.compare("None") == 0)
+  {
+    response["STATUS"] = "NO header provided ";
+    return;
+  }
+  Json::Reader reader;
+  Json::Value jsta;
+  bool parsingSuccessful = reader.parse(shead, jsta);
+  if (!parsingSuccessful)
+  {
+    response["STATUS"] = "Cannot parse header tag ";
+    return;
+  }
+  const Json::Value &jdevs = jsta;
+  LOG4CXX_DEBUG(_logZdaqex, "Header " << jdevs);
+  std::vector<uint32_t> &v = _merger->runHeader();
+  v.clear();
+  for (Json::ValueConstIterator jt = jdevs.begin(); jt != jdevs.end(); ++jt)
+    v.push_back((*jt).asInt());
+
+
+  if (nextevent != -1)
+    _merger->setRunHeaderEvent(nextevent);
+  _merger->processRunHeader();
+
+  response["STATUS"] = "DONE";
+  response["VALUE"] = jsta;
+}
+
