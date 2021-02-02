@@ -68,6 +68,7 @@ void zdaq::builder::collector::configure(zdaq::fsmmessage *m)
     _merger->setPurge(jc["purge"].asInt() != 0);
 
   // Register the data source
+  Json::Value array_keys;
   std::stringstream st("");
   st<<"tcp://*:"<<jc["collectingPort"].asUInt();
   LOG4CXX_INFO(_logZdaqex, "Registering " << st.str());

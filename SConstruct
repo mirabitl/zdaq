@@ -1,1 +1,1 @@
-SConscript(['SConscript','example/SConscript'])
+SConscript(['SConscript','example/SConscript','builder/SConscript'])
