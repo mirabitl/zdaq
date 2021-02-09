@@ -1,4 +1,4 @@
-#include "localCollector.hh"
+#include "zmonSupervisor.hh"
 #include <stdlib.h>
 #include <sstream>
 #include <unistd.h>
@@ -20,11 +20,11 @@ int main()
   uint32_t instance=0;
   char* wp=getenv("INSTANCE");
   if (wp!=NULL)      instance=atoi(wp);
-  s0<<"ZEVB-"<<instance;
+  s0<<"ZMON-"<<instance;
   std::cout<<"Starting  "<<s0.str()<<std::endl;
 
 
-  zdaq::builder::collector* s=new zdaq::builder::collector(s0.str());
+  zdaq::monitoring::supervisor* s=new zdaq::monitoring::supervisor(s0.str());
   while (true)
     sleep((unsigned int) 3);
 }

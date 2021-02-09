@@ -1,194 +1,228 @@
-#include "localCollector.hh"
+#include "zmonSupervisor.hh"
+#include <time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <sys/dir.h>
+#include <sys/param.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdint.h>
+#include <fcntl.h>
+#include <iostream>
+#include <sstream>
+#include <dlfcn.h>
+
 
 using namespace zdaq;
-using namespace zdaq::builder;
+using namespace zdaq::monitoring;
 
-zdaq::builder::collector::collector(std::string name) : zdaq::baseApplication(name), _running(false), _merger(NULL)
+zdaq::monitoring::supervisor::supervisor(std::string name) : zdaq::baseApplication(name), _running(false), _publisher(NULL),_period(30)
 {
-  // Create the context and the merger
-  _context = new zmq::context_t();
-  _merger = new zdaq::zmMerger(_context);
-
+  this->unlock();
   // Register state
   this->fsm()->addState("CREATED");
   this->fsm()->addState("CONFIGURED");
   this->fsm()->addState("RUNNING");
 
   // Register transitions
-  this->fsm()->addTransition("CONFIGURE", "CREATED", "CONFIGURED", boost::bind(&zdaq::builder::collector::configure, this, _1));
-  this->fsm()->addTransition("CONFIGURE", "CONFIGURED", "CONFIGURED", boost::bind(&zdaq::builder::collector::configure, this, _1));
-  this->fsm()->addTransition("START", "CONFIGURED", "RUNNING", boost::bind(&zdaq::builder::collector::start, this, _1));
-  this->fsm()->addTransition("STOP", "RUNNING", "CONFIGURED", boost::bind(&zdaq::builder::collector::stop, this, _1));
-  this->fsm()->addTransition("HALT", "RUNNING", "CREATED", boost::bind(&zdaq::builder::collector::halt, this, _1));
-  this->fsm()->addTransition("HALT", "CONFIGURED", "CREATED", boost::bind(&zdaq::builder::collector::halt, this, _1));
+  this->fsm()->addTransition("CONFIGURE", "CREATED", "CONFIGURED", boost::bind(&zdaq::monitoring::supervisor::configure, this, _1));
+  this->fsm()->addTransition("START", "CONFIGURED", "RUNNING", boost::bind(&zdaq::monitoring::supervisor::start, this, _1));
+  this->fsm()->addTransition("STOP", "RUNNING", "CONFIGURED", boost::bind(&zdaq::monitoring::supervisor::stop, this, _1));
+  this->fsm()->addTransition("HALT", "RUNNING", "CREATED", boost::bind(&zdaq::monitoring::supervisor::halt, this, _1));
+  this->fsm()->addTransition("HALT", "CONFIGURED", "CREATED", boost::bind(&zdaq::monitoring::supervisor::halt, this, _1));
 
   // Standalone command
-  this->fsm()->addCommand("STATUS", boost::bind(&zdaq::builder::collector::status, this, _1, _2));
-  this->fsm()->addCommand("SETHEADER", boost::bind(&zdaq::builder::collector::c_setheader, this, _1, _2));
-  this->fsm()->addCommand("PURGE", boost::bind(&zdaq::builder::collector::c_purge, this, _1, _2));
+  this->fsm()->addCommand("STATUS", boost::bind(&zdaq::monitoring::supervisor::status, this, _1, _2));
 
   //Start server
   char *wp = getenv("WEBPORT");
   if (wp != NULL)
-  {
-    LOG4CXX_INFO(_logZdaqex, __PRETTY_FUNCTION__ << "Service " << name << " started on port " << atoi(wp));
-    this->fsm()->start(atoi(wp));
-  }
+    {
+      LOG4CXX_INFO(_logZdaqex, __PRETTY_FUNCTION__ << "Service " << name << " started on port " << atoi(wp));
+      this->fsm()->start(atoi(wp));
+    }
 }
 
-void zdaq::builder::collector::configure(zdaq::fsmmessage *m)
+void zdaq::monitoring::supervisor::configure(zdaq::fsmmessage *m)
 {
   LOG4CXX_INFO(_logZdaqex, __PRETTY_FUNCTION__ << "Received " << m->command() << " Value " << m->value());
   // Store message content in paramters
 
-  if (m->content().isMember("collectingPort"))
-  {
-    this->parameters()["collectingPort"] = m->content()["collectingPort"];
-  }
-  if (m->content().isMember("processor"))
-  {
-    this->parameters()["processor"] = m->content()["processor"];
-  }
+  if (m->content().isMember("TCPPort"))
+    {
+      this->parameters()["TCPPort"] = m->content()["TCPPort"];
+    }
+  if (m->content().isMember("period"))
+    {
+      this->parameters()["period"] = m->content()["period"];
+    }
+  if (m->content().isMember("plugins"))
+    {
+      this->parameters()["plugins"] = m->content()["plugins"];
+    }
   // Check that needed parameters exists
 
-  if (!this->parameters().isMember("collectingPort"))
-  {
-    LOG4CXX_ERROR(_logZdaqex, "Missing collectingPort,no data stream");
-    return;
-  }
-  if (!this->parameters().isMember("processor"))
-  {
-    LOG4CXX_ERROR(_logZdaqex, "Missing processor, list of processing pluggins");
-    return;
-  }
-
-  // register data source and processors
+  
+  if (!this->parameters().isMember("plugins"))
+    {
+      LOG4CXX_ERROR(_logZdaqex, "Missing plugins, list of monitoring pluggins");
+      return;
+    }
+  if (!this->parameters().isMember("period"))
+    {
+      LOG4CXX_ERROR(_logZdaqex, "Missing period, period of monitoring readout");
+      return;
+    }
   Json::Value jc = this->parameters();
-  if (jc.isMember("purge"))
-    _merger->setPurge(jc["purge"].asInt() != 0);
 
-  // Register the data source
-  Json::Value array_keys;
-  std::stringstream st("");
-  st<<"tcp://*:"<<jc["collectingPort"].asUInt();
-  LOG4CXX_INFO(_logZdaqex, "Registering " << st.str());
-  _merger->registerDataSource(st.str());
-  array_keys.append(st.str());
+  if (this->parameters().isMember("TCPPort"))
+    {
+      _context= new zmq::context_t(1);
+      _publisher= new zmq::socket_t((*_context), ZMQ_PUB);
+      std::stringstream sport;
+      sport<<"tcp://*:"<<this->parameters()["TCPPort"].asUInt();
+      std::cout<<"Binding to "<<sport.str()<<std::endl;
+      _publisher->bind(sport.str());
+      
+    }
+  if (m->content().isMember("location"))
+    { 
+      this->parameters()["location"]=m->content()["location"];
+    }
+  else
+    if (!this->parameters().isMember("location"))
+      this->parameters()["location"]="/HOME";
+  
 
   // Register the processors
-  const Json::Value &pbooks = jc["processor"];
+  const Json::Value &pbooks = jc["plugins"];
   Json::Value parray_keys;
   for (Json::ValueConstIterator it = pbooks.begin(); it != pbooks.end(); ++it)
-  {
-    const Json::Value &book = *it;
-    LOG4CXX_INFO(_logZdaqex, "registering " << (*it).asString());
-    _merger->registerProcessor((*it).asString());
-    parray_keys.append((*it).asString());
-  }
+    {
+      const Json::Value &book = *it;
+      LOG4CXX_INFO(_logZdaqex, "registering " << (*it).asString());
+      this->registerPlugin((*it).asString());
+      parray_keys.append((*it).asString());
+    }
 
-  LOG4CXX_INFO(_logZdaqex, " Setting parameters for processors and merger ");
-  _merger->loadParameters(jc);
+  LOG4CXX_INFO(_logZdaqex, " Setting parameters for plugins ");
+  for (auto x:_plugins)
+    x->loadParameters(this->parameters());
+  LOG4CXX_INFO(_logZdaqex, " Registering plugins command ");
+  for (auto x:_plugins)
+    x->registerCommands(this->fsm());
+  LOG4CXX_INFO(_logZdaqex, " Open plugins  ");
+  for (auto x:_plugins)
+    x->open(m);
 
   
   // Overwrite msg
   //Prepare complex answer
   Json::Value prep;
-  prep["sourceRegistered"] = array_keys;
-  prep["processorRegistered"] = parray_keys;
+  prep["plugins"] = parray_keys;
 
   m->setAnswer(prep);
   LOG4CXX_DEBUG(_logZdaqex, "end of configure");
   return;
 }
+void zdaq::monitoring::supervisor::registerPlugin(std::string name)
+{
+  std::stringstream s;
+  s << "lib" << name << ".so";
+  void *library = dlopen(s.str().c_str(), RTLD_NOW);
 
-void zdaq::builder::collector::start(zdaq::fsmmessage *m)
+  //printf("%s %x \n",dlerror(),(unsigned int) library);
+  LOG4CXX_INFO(_logZdaq, " Error " << dlerror() << " Library open address " << std::hex << library << std::dec);
+  // Get the loadFilter function, for loading objects
+  zdaq::zmonPlugin *(*create)();
+  create = (zdaq::zmonPlugin * (*)()) dlsym(library, "loadPlugin");
+  LOG4CXX_INFO(_logZdaq, " Error " << dlerror() << " file " << s.str() << " loads to processor address " << std::hex << create << std::dec);
+  //printf("%s %x \n",dlerror(),(unsigned int) create);
+  // printf("%s lods to %x \n",s.str().c_str(),(unsigned int) create);
+  //void (*destroy)(Filter*);
+  // destroy = (void (*)(Filter*))dlsym(library, "deleteFilter");
+  // Get a new filter object
+  zdaq::zmonPlugin *a = (zdaq::zmonPlugin *)create();
+  _plugins.push_back(a);
+
+}
+void zdaq::monitoring::supervisor::start(zdaq::fsmmessage *m)
 {
   LOG4CXX_DEBUG(_logZdaqex, "Received " << m->command() << " Value " << m->value());
-  Json::Value jc = m->content();
-  _merger->start(jc["run"].asInt());
+
+  g_store.create_thread(boost::bind(&zdaq::monitoring::supervisor::monitor, this));
+	
   _running = true;
 
-  LOG4CXX_INFO(_logZdaqex, "Builder Run " << jc["run"].asInt() << " is started ");
 }
-void zdaq::builder::collector::stop(zdaq::fsmmessage *m)
+void zdaq::monitoring::supervisor::stop(zdaq::fsmmessage *m)
 {
   LOG4CXX_DEBUG(_logZdaqex, "Received " << m->command() << " Value " << m->value());
-  _merger->stop();
-  _running = false;
-  LOG4CXX_INFO(_logZdaqex, "Builder is stopped \n");
-  fflush(stdout);
+  _running=false;
+  g_store.join_all();
 }
-void zdaq::builder::collector::halt(zdaq::fsmmessage *m)
+void zdaq::monitoring::supervisor::halt(zdaq::fsmmessage *m)
 {
 
   LOG4CXX_DEBUG(_logZdaqex, "Received " << m->command());
   if (_running)
     this->stop(m);
 
-  LOG4CXX_INFO(_logZdaqex, "Destroying Builder Sources");
+  LOG4CXX_INFO(_logZdaqex, "Destroying plugins");
   //stop data sources
-  _merger->clear();
+  _plugins.clear();
 }
-void zdaq::builder::collector::status(Mongoose::Request &request, Mongoose::JsonResponse &response)
+void zdaq::monitoring::supervisor::status(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
 
-  if (_merger != NULL)
-  {
-
-    response["answer"] = _merger->status();
-  }
+  if (_plugins.size() != 0)
+    {
+      for (auto x:_plugins)
+	{
+	  response[x->hardware()] = x->status();
+	}
+    }
   else
-    response["answer"] = "NO merger created yet";
+    response["error"] = "No plugins load yet";
 }
 
-void zdaq::builder::collector::c_purge(Mongoose::Request &request, Mongoose::JsonResponse &response)
+
+void zdaq::monitoring::supervisor::monitor()
 {
-  if (_merger != NULL)
-  {
-    LOG4CXX_INFO(_logZdaqex, "Setting Purge flag to "<<request.get("active", "0"));
+  Json::FastWriter fastWriter;
+  while (_running)
+    {
+    
+      // ID
+      for (auto x:_plugins)
+	{
+	  if (_publisher!=NULL)
+	    {
+	      std::stringstream sheader;
+	      sheader<<x->hardware()<<"@"<<this->parameters()["location"].asString()<<"@"<<time(0);
+	      std::string head=sheader.str();
+    
+	      zmq::message_t ma1((void*)head.c_str(), head.length(), NULL); 
+	      _publisher->send(ma1, ZMQ_SNDMORE);
+	      // Status
+	      Json::Value jstatus=x->status();
+	      std::string scont= fastWriter.write(jstatus);
+	      zmq::message_t ma2((void*)scont.c_str(), scont.length(), NULL); 
 
-    _merger->setPurge(atoi(request.get("active", "0").c_str()) != 0);
-    response["answer"] = atoi(request.get("active", "0").c_str());
-  }
-  else
-    response["answer"] = "NO merger created yet";
+	      std::cout<<"publishing "<<head<<" =>"<<scont<<std::endl;
+	      _publisher->send(ma2);
+	    }
+	}
+      if (!_running) break;
+      ::sleep(_period);
+
+      std::cout<<"End of monitoring task"<<std::endl;
+
+    }
 }
-void zdaq::builder::collector::c_setheader(Mongoose::Request &request, Mongoose::JsonResponse &response)
-{
-
-  if (_merger == NULL)
-  {
-    response["STATUS"] = "NO EVB created";
-    return;
-  }
-  int32_t nextevent = atoi(request.get("nextevent", "-1").c_str());
-  std::string shead = request.get("header", "None");
-  if (shead.compare("None") == 0)
-  {
-    response["STATUS"] = "NO header provided ";
-    return;
-  }
-  Json::Reader reader;
-  Json::Value jsta;
-  bool parsingSuccessful = reader.parse(shead, jsta);
-  if (!parsingSuccessful)
-  {
-    response["STATUS"] = "Cannot parse header tag ";
-    return;
-  }
-  const Json::Value &jdevs = jsta;
-  LOG4CXX_DEBUG(_logZdaqex, "Header " << jdevs);
-  std::vector<uint32_t> &v = _merger->runHeader();
-  v.clear();
-  for (Json::ValueConstIterator jt = jdevs.begin(); jt != jdevs.end(); ++jt)
-    v.push_back((*jt).asInt());
-
-
-  if (nextevent != -1)
-    _merger->setRunHeaderEvent(nextevent);
-  _merger->processRunHeader();
-
-  response["STATUS"] = "DONE";
-  response["VALUE"] = jsta;
-}
-

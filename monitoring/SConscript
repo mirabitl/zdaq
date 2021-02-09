@@ -133,11 +133,11 @@ env['BUILDERS']['PythonModule'] = SWIGSharedLibrary
 
 
 # Library source
-LIBRARY_SOURCES=["src/localCollector.cc"]
+LIBRARY_SOURCES=["src/zmonSupervisor.cxx"]
 
 #print LIBRARY_SOURCES
 #Shared library
-lzdaqex=env.SharedLibrary("lib/zdaqevb",LIBRARY_SOURCES)
+lzdaqex=env.SharedLibrary("lib/zdaqmon",LIBRARY_SOURCES)
 
 
 
@@ -145,10 +145,10 @@ lzdaqex=env.SharedLibrary("lib/zdaqevb",LIBRARY_SOURCES)
 EXE_LIBPATH=LIBRARY_PATHS
 EXE_LIBPATH.append("./lib")
 EXE_LIBS=LIBRARIES
-EXE_LIBS.append("zdaqevb")
+EXE_LIBS.append("zdaqmon")
 plist=[]
 
-builderd=env.Program("bin/zdaq_daemon_zevb",source="src/builder.cc",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+builderd=env.Program("bin/zdaq_daemon_zmon",source="src/supervisor.cc",LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
 
 #env.Alias('install', [DHCAL_ROOT+"/opt/dhcal/lib",DHCAL_ROOT+"/opt/dhcal/bin"])
 

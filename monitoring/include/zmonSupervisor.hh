@@ -3,6 +3,7 @@
 #include "baseApplication.hh"
 #include "zmonPlugin.hh"
 #include "zdaqLogger.hh"
+#include <zmq.hpp>
 
 namespace zdaq
 {
@@ -14,16 +15,23 @@ namespace zdaq
       void start(zdaq::fsmmessage* m);
       void stop(zdaq::fsmmessage* m);
       void halt(zdaq::fsmmessage* m);
-      void destroy(zdaq::fsmmessage* m);
+      void monitor();
 
       void status(Mongoose::Request &request, Mongoose::JsonResponse &response);
       void registerPlugin(std::string name);
-
+      void lock(){theSync_.lock();}
+      void unlock(){theSync_.unlock();}
     private:
 
       bool _running,_readout;
-      zmq::context_t* _context;
-      std::vector<zmonPlugin* > _plugins;
+      uint32_t _period;
+
+      std::vector<zdaq::zmonPlugin* > _plugins;
+      zmq::context_t* _context;      
+      zmq::socket_t *_publisher;
+      boost::thread_group g_store;
+      boost::interprocess::interprocess_mutex theSync_;
+
 
     };
   };
