@@ -79,6 +79,8 @@ void zdaq::monitoring::supervisor::configure(zdaq::fsmmessage *m)
       LOG4CXX_ERROR(_logZdaqex, "Missing period, period of monitoring readout");
       return;
     }
+  else
+    _period=this->parameters()["period"].asUInt();
   Json::Value jc = this->parameters();
 
   if (this->parameters().isMember("TCPPort"))
