@@ -99,6 +99,8 @@ void zdaq::monitoring::supervisor::configure(zdaq::fsmmessage *m)
     if (!this->parameters().isMember("location"))
       this->parameters()["location"]="/HOME";
   
+  //Prepare complex answer
+  Json::Value prep;
 
   // Register the processors
   const Json::Value &pbooks = jc["plugins"];
@@ -120,12 +122,32 @@ void zdaq::monitoring::supervisor::configure(zdaq::fsmmessage *m)
   LOG4CXX_INFO(_logZdaqex, " Open plugins  ");
   for (auto x:_plugins)
     x->open(m);
-
-  
-  // Overwrite msg
-  //Prepare complex answer
-  Json::Value prep;
   prep["plugins"] = parray_keys;
+  
+  // Look for zmonStore declarations
+  if (jc.isMember("stores"))
+    {
+      const Json::Value &pbooks = jc["stores"];
+      Json::Value parray_keys;
+      for (Json::ValueConstIterator it = pbooks.begin(); it != pbooks.end(); ++it)
+	{
+	  const Json::Value &book = *it;
+	  LOG4CXX_INFO(_logZdaqex, "registering " << (*it).asString());
+	  this->registerStore((*it).asString());
+	  parray_keys.append((*it).asString());
+	}
+
+      LOG4CXX_INFO(_logZdaqex, " Setting parameters for stores ");
+      for (auto x:_stores)
+	x->loadParameters(this->parameters());
+      LOG4CXX_INFO(_logZdaqex, " Connect stores  ");
+      for (auto x:_stores)
+	x->connect();
+      prep["stores"] = parray_keys;
+    }
+
+  // Overwrite msg
+
 
   m->setAnswer(prep);
   LOG4CXX_DEBUG(_logZdaqex, "end of configure");
@@ -152,6 +174,28 @@ void zdaq::monitoring::supervisor::registerPlugin(std::string name)
   _plugins.push_back(a);
 
 }
+void zdaq::monitoring::supervisor::registerStore(std::string name)
+{
+  std::stringstream s;
+  s << "lib" << name << ".so";
+  void *library = dlopen(s.str().c_str(), RTLD_NOW);
+
+  //printf("%s %x \n",dlerror(),(unsigned int) library);
+  LOG4CXX_INFO(_logZdaq, " Error " << dlerror() << " Library open address " << std::hex << library << std::dec);
+  // Get the loadFilter function, for loading objects
+  zdaq::zmonStore *(*create)();
+  create = (zdaq::zmonStore * (*)()) dlsym(library, "loadStore");
+  LOG4CXX_INFO(_logZdaq, " Error " << dlerror() << " file " << s.str() << " loads to processor address " << std::hex << create << std::dec);
+  //printf("%s %x \n",dlerror(),(unsigned int) create);
+  // printf("%s lods to %x \n",s.str().c_str(),(unsigned int) create);
+  //void (*destroy)(Filter*);
+  // destroy = (void (*)(Filter*))dlsym(library, "deleteFilter");
+  // Get a new filter object
+  zdaq::zmonStore *a = (zdaq::zmonStore *)create();
+  _stores.push_back(a);
+
+}
+
 void zdaq::monitoring::supervisor::start(zdaq::fsmmessage *m)
 {
   LOG4CXX_DEBUG(_logZdaqex, "Received " << m->command() << " Value " << m->value());
@@ -177,6 +221,7 @@ void zdaq::monitoring::supervisor::halt(zdaq::fsmmessage *m)
   LOG4CXX_INFO(_logZdaqex, "Destroying plugins");
   //stop data sources
   _plugins.clear();
+  _stores.clear();
 }
 void zdaq::monitoring::supervisor::status(Mongoose::Request &request, Mongoose::JsonResponse &response)
 {
@@ -218,6 +263,9 @@ void zdaq::monitoring::supervisor::monitor()
 	      std::cout<<"publishing "<<head<<" =>"<<scont<<std::endl;
 	      _publisher->send(ma2);
 	    }
+	  // Save the status in all conncted stores
+	  for (auto y:_stores)
+	    y->store(this->parameters()["location"].asString(),x->hardware(),(uint32_t) time(0),x->status());
 	}
       if (!_running) break;
       ::sleep(_period);

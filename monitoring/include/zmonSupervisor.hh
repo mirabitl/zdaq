@@ -2,6 +2,7 @@
 #define _zdaq_zmonSupervisor_h
 #include "baseApplication.hh"
 #include "zmonPlugin.hh"
+#include "zmonStore.hh"
 #include "zdaqLogger.hh"
 #include <zmq.hpp>
 
@@ -19,6 +20,7 @@ namespace zdaq
 
       void status(Mongoose::Request &request, Mongoose::JsonResponse &response);
       void registerPlugin(std::string name);
+      void registerStore(std::string name);
       void lock(){theSync_.lock();}
       void unlock(){theSync_.unlock();}
     private:
@@ -27,6 +29,7 @@ namespace zdaq
       uint32_t _period;
 
       std::vector<zdaq::zmonPlugin* > _plugins;
+      std::vector<zdaq::zmonStore* > _stores;
       zmq::context_t* _context;      
       zmq::socket_t *_publisher;
       boost::thread_group g_store;
