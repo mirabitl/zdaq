@@ -1,1 +1,1 @@
-SConscript(['SConscript'])
+SConscript(['SConscript','daemon/SConscript'])

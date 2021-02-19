@@ -1,0 +1,102 @@
+import sys,os,commands
+import  os
+import re
+import sys
+
+#print "----------------------------------------------"
+Decider('MD5-timestamp')
+ZDAQ_ROOT="/opt/zdaq"
+
+fres=os.popen('uname -r')
+kl=fres.readline().split(".")
+
+platform="UBUNTU"
+if (kl[len(kl)-1][0:3] == 'el5'):
+    platform="SLC5"
+
+if (kl[len(kl)-2][0:3] == 'el6'):
+    platform="SLC6"
+print kl[len(kl)-2][0:3]
+fres=os.popen('uname -p')
+kp=fres.readline()
+osv=kp[0:len(kp)-1]
+
+print platform,osv
+
+Bit64=False
+Bit64=os.uname()[4]=='x86_64'
+
+kl=os.uname()[2].split(".")
+platform="UBUNTU"
+if (kl[len(kl)-1][0:3] == 'el5'):
+    platform="SLC5"
+
+if (kl[len(kl)-2][0:3] == 'el6'):
+    platform="SLC6"
+
+Arm=os.uname()[4]=='armv7l'
+
+if Arm or platform=="UBUNTU":
+  boostsystem='boost_system'
+  boostthread='boost_thread'
+else:
+  boostsystem='boost_system-mt'
+  boostthread='boost_thread-mt'
+
+  
+
+Use_Mongoose=os.path.exists("/usr/local/include/mongoose")
+
+# includes
+INCLUDES=["../../include","../include",'include',"/usr/include/boost141/","/usr/include/jsoncpp"]
+
+INCLUDES.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.get_python_inc()'"))
+
+  
+CPPFLAGS=["-pthread","-g","-O2","-DLINUX", "-DREENTRANT" ,"-Dlinux", "-DLITTLE_ENDIAN__ ", "-Dx86",  "-DXERCES=2", "-DDAQ_VERSION_2","-std=c++11"]
+LIBRARIES=['pthread', 'm', 'z','stdc++',boostsystem,boostthread,'curl','zmq','jsoncpp','log4cxx','zdaq','dl']
+
+
+#Library path XDAQ,DHCAL and ROOT + Python
+if (Bit64):
+  LIBRARY_PATHS=["/usr/lib64","/usr/local/lib"]
+else:
+  LIBRARY_PATHS=["/usr/lib","/usr/local/lib"]
+LIBRARY_PATHS.append(commands.getoutput("python -c 'import distutils.sysconfig as conf; print conf.PREFIX'")+"/lib")
+
+LIBRARY_PATHS.append('../../lib')
+LIBRARY_PATHS.append('../lib')	
+if (Use_Mongoose):
+  LIBRARY_PATHS.append('/usr/local/lib')
+  LIBRARIES.append('mongoose')
+  INCLUDES.append('/usr/local/include/')
+  INCLUDES.append('/usr/local/include/mongoose')
+ 
+  
+#link flags
+LDFLAGS=["-fPIC","-dynamiclib"]
+
+# SWIG
+SWIGSF=["-c++","-classic"]
+
+for i in INCLUDES:
+    SWIGSF.append("-I"+i)
+#print SWIGSF
+
+# Create the Environment
+env = Environment(CPPPATH=INCLUDES,CPPFLAGS=CPPFLAGS,LINKFLAGS=LDFLAGS, LIBS=LIBRARIES,LIBPATH=LIBRARY_PATHS,SWIGFLAGS=SWIGSF)
+
+#print "CC is:",env.subst('$CPPPATH')
+
+
+#Daemon 
+EXE_LIBPATH=LIBRARY_PATHS
+EXE_LIBS=LIBRARIES
+plist=[]
+
+builderd=env.Program("bin/lscm",source=["src/lsc.cxx","src/lscm.cc"],LIBPATH=EXE_LIBPATH,LIBS=EXE_LIBS)
+
+#env.Alias('install', [DHCAL_ROOT+"/opt/dhcal/lib",DHCAL_ROOT+"/opt/dhcal/bin"])
+
+
+
