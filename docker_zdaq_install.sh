@@ -41,6 +41,10 @@ find /opt/zdaq -name 'lib*.so' -exec ln -sf {} /usr/local/lib/ \;
 find /opt/zdaq/bin/ -wholename '*/bin/*' -type f -executable  -exec ln -sf {} /usr/local/bin \;
 find /opt/zdaq/monitoring/ -wholename '*/bin/*' -type f -executable  -exec ln -sf {} /usr/local/bin \;
 
+find /opt/zdaq/example/ -wholename '*/bin/*' -type f -executable  -exec ln -sf {} /usr/local/bin \;
+
+find /opt/zdaq/builder/ -wholename '*/bin/*' -type f -executable  -exec ln -sf {} /usr/local/bin \;
+
 find /opt/zdaq -name '*.os' -exec rm {} \;
 find /opt/zdaq -name '*.o' -exec rm {} \;
 
