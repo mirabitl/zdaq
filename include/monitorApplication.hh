@@ -6,7 +6,7 @@
 #include <json/json.h>
 using namespace std;
 #include <sstream>
-#include "ReadoutLogger.hh"
+//#include "ReadoutLogger.hh"
 #include <zmq.hpp>
 
 

@@ -236,7 +236,7 @@ def instance():
     pwd=userinfo.split("/")[1]
     host=hostinfo.split(":")[0]
     port=int(hostinfo.split(":")[1])
-    #print(host,port,dbname,user,pwd)
+    print(host,port,dbname,user,pwd)
     _wdd=MongoJob(host,port,dbname,user,pwd)
-    #print("apres")
+    print("apres")
     return _wdd
