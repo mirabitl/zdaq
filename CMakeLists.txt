@@ -4,11 +4,12 @@ cmake_minimum_required(VERSION 3.0)
 # Notre projet est étiqueté libhello
 
 project(zdaq VERSION 1.0.0 DESCRIPTION "zdaq base library")
+
+#package Settings
 if(NOT UNIX AND NOT APPLE)
 set(CPACK_GENERATOR "DEB")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Laurent Mirabito")
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
-#set(CPACK_DEBIAN_PACKAGE_DEPENDS "libzmq3-dev,libcpprest-dev,libftdi-dev,liblog4cxx-dev,libboost-system-dev,libmongoc-dev")
 endif()
 set(CPACK_PACKAGE_NAME "zdaq")
 set(CPACK_PACKAGE_VENDOR "ip2i")
@@ -18,6 +19,16 @@ set(CPACK_PACKAGE_VERSION_MINOR 0)
 set(CPACK_PACKAGE_VERSION_PATCH 0)
 set(CPACK_SET_DESTDIR true)
 set(CPACK_INSTALL_PREFIX /usr/local/zdaq)
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "^arm")
+  set(CPACK_SYSTEM_NAME "Linux-arm")
+  set(CPACK_TOPLEVEL_TAG "Linux-arm")
+endif()
+
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
+  set(CPACK_SYSTEM_NAME "Linux-x86_64")
+  set(CPACK_TOPLEVEL_TAG "Linux-x86_64")
+endif()
+
 #set(FAKE_TARGET fakeTarget)
 #if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/include/netlink/config.h )
 #  add_custom_target(fakeTarget  echo "netLink already installed")
@@ -171,4 +182,4 @@ install(FILES ${INCLUDE_TARGET}  DESTINATION include )
 #install(FILES ${MG_TARGET} ${DAEMON_TARGET} DESTINATION bin)
 
 install(TARGETS ljc  DESTINATION bin  ARCHIVE DESTINATION bin)
-#install(CODE "execute_process(COMMAND chmod -R +x ${CMAKE_INSTALL_PREFIX}/bin/)")
+install(CODE "execute_process(COMMAND chmod -R +x ${CMAKE_INSTALL_PREFIX}/bin/)")
