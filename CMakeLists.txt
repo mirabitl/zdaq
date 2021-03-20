@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.0)
 # Notre projet est étiqueté libhello
 
 project(zdaq VERSION 1.0.0 DESCRIPTION "zdaq base library")
-if(UNIX AND NOT APPLE)
+if(NOT UNIX AND NOT APPLE)
 set(CPACK_GENERATOR "DEB")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Laurent Mirabito")
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
