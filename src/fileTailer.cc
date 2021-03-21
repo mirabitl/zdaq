@@ -57,7 +57,7 @@ int fileTailer::fileTail(FILE* s,char *lines[][2], int nlines, char buff[], int 
     *buffp = '\0';
     lines[nlines - 1][wrap] = linestart;
   }
-
+  return 0;
 }
 
 
@@ -109,7 +109,7 @@ int fileTailer::findTail(char *lines[][2], int nlines, char buff[], int maxbuff)
 	lines[nlines - 1][wrap] = linestart;
       }
   }
-
+  return 0;
 }
 
 /* shift is used upon finding a character that starts a new line. It shifts
