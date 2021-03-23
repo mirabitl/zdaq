@@ -12,7 +12,7 @@ PATH="/sbin:/bin:/usr/sbin:/usr/bin" #Ne pas toucher
 
 export LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/usr/local/zdaq/lib:$LD_LIBRARY_PATH
 export PATH=/usr/local/zdaq/bin:$PATH
-export PYTHONPATH=/usr/local/zdaq/scripts:$PYTHONPATH
+export PYTHONPATH=/usr/local/zdaq/share:$PYTHONPATH
 
 
 
