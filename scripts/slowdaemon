@@ -10,7 +10,7 @@ DEAMON_NAME="lscm" #Nom du programme (doit être identique à l'exécutable)
 PATH="/sbin:/bin:/usr/sbin:/usr/bin" #Ne pas toucher
 
 
-export LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/usr/local/zdaq/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/usr/local/zdaq/lib:/usr/local/lydaq/lib:$LD_LIBRARY_PATH
 export PATH=/usr/local/zdaq/scripts:$PATH
 export PYTHONPATH=/usr/local/zdaq/scripts:$PYTHONPATH
 
