@@ -5,7 +5,7 @@
 #include "zmonStore.hh"
 #include "zdaqLogger.hh"
 #include <zmq.hpp>
-
+#include "pluginUtil.hh"
 namespace zdaq
 {
   class lsc  {
@@ -26,8 +26,8 @@ namespace zdaq
     bool _running,_readout;
     uint32_t _period;
     Json::Value _params;
-    std::vector<zdaq::zmonPlugin* > _plugins;
-    std::vector<zdaq::zmonStore* > _stores;
+    std::map<std::string,zdaq::pluginUtil<zdaq::zmonPlugin> > _plugins;
+    std::map<std::string,zdaq::pluginUtil<zdaq::zmonStore> > _stores;
     zmq::context_t* _context;      
     zmq::socket_t *_publisher;
     boost::thread_group g_store;

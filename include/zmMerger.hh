@@ -6,6 +6,7 @@
 #include "zmBuffer.hh"
 #include "zmPuller.hh"
 #include "zPublisher.hh"
+#include "pluginUtil.hh"
 #include <vector>
 #include <map>
 #include <string>
@@ -142,7 +143,7 @@ namespace zdaq {
     */
     inline void setNumberOfDataSource(uint32_t k){_nDifs=k;}
     uint32_t numberOfDataPacket(uint32_t k);///< Number of received packet
-    void unregisterProcessor(zdaq::zmprocessor* p);///< remove a processor from the list
+    void unregisterProcessor(std::string name);///< remove a processor from the list
 
     /**
        \brief Start of run
@@ -204,7 +205,7 @@ namespace zdaq {
   private:
     bool _useEventId;
     uint32_t _nDifs;
-    std::vector<zmprocessor* > _processors;
+    std::map<std::string,zdaq::pluginUtil<zmprocessor> > _processors;
     std::map<uint64_t,std::vector<zdaq::buffer*> > _eventMap;
 	
     boost::thread_group _gThread;

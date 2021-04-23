@@ -77,11 +77,11 @@ void zdaq::lsc::parseDefaults(zdaq::fsmmessage *m)
 	    }
 	  
 	  LOG4CXX_INFO(_logZdaqex, " Setting parameters for stores ");
-	  for (auto x:_stores)
-	    x->loadParameters(_params);
+	  for (auto x=_stores.begin();x!=_stores.end();x++)
+	    x->second.ptr()->loadParameters(_params);
 	  LOG4CXX_INFO(_logZdaqex, " Connect stores  ");
-	  for (auto x:_stores)
-	    x->connect();
+	  for (auto x=_stores.begin();x!=_stores.end();x++)
+	    x->second.ptr()->connect();
 	}
 
       if (_params.isMember("TCPPort"))
@@ -109,14 +109,14 @@ void zdaq::lsc::parseDefaults(zdaq::fsmmessage *m)
 	}
       
       LOG4CXX_INFO(_logZdaqex, " Setting parameters for Default  plugins ");
-      for (auto x:_plugins)
-	x->loadParameters(_params);
+      for (auto x=_plugins.begin();x!=_plugins.end();x++)
+	x->second.ptr()->loadParameters(_params);
       LOG4CXX_INFO(_logZdaqex, " Registering Default plugins command ");
-      for (auto x:_plugins)
-	x->registerCommands(_fsm);
+      for (auto x=_plugins.begin();x!=_plugins.end();x++)
+	x->second.ptr()->registerCommands(_fsm);
       LOG4CXX_INFO(_logZdaqex, " Open Default plugins  ");
-      for (auto x:_plugins)
-	x->open(m);
+      for (auto x=_plugins.begin();x!=_plugins.end();x++)
+	x->second.ptr()->open(m);
 
 
     }
@@ -137,6 +137,7 @@ void zdaq::lsc::configure(zdaq::fsmmessage *m)
 }
 void zdaq::lsc::registerPlugin(std::string name)
 {
+  #ifdef OLDPLUGIN
   std::stringstream s;
   s << "lib" << name << ".so";
   void *library = dlopen(s.str().c_str(), RTLD_NOW);
@@ -154,10 +155,17 @@ void zdaq::lsc::registerPlugin(std::string name)
   // Get a new filter object
   zdaq::zmonPlugin *a = (zdaq::zmonPlugin *)create();
   _plugins.push_back(a);
+  #else
+  zdaq::pluginUtil<zdaq::zmonPlugin> p_info(name,"loadPlugin","deletePlugin");
+  
+  _plugins.insert(std::pair<std::string,zdaq::pluginUtil<zdaq::zmonPlugin> >(name,p_info));
+
+  #endif
 
 }
 void zdaq::lsc::registerStore(std::string name)
 {
+#ifdef OLDPLUGIN
   std::stringstream s;
   s << "lib" << name << ".so";
   void *library = dlopen(s.str().c_str(), RTLD_NOW);
@@ -175,6 +183,13 @@ void zdaq::lsc::registerStore(std::string name)
   // Get a new filter object
   zdaq::zmonStore *a = (zdaq::zmonStore *)create();
   _stores.push_back(a);
+
+    #else
+  zdaq::pluginUtil<zdaq::zmonStore> p_info(name,"loadStore","deleteStore");
+  
+  _stores.insert(std::pair<std::string,zdaq::pluginUtil<zdaq::zmonStore> >(name,p_info));
+
+  #endif
 
 }
 
@@ -198,9 +213,9 @@ void zdaq::lsc::status(Mongoose::Request &request, Mongoose::JsonResponse &respo
 
   if (_plugins.size() != 0)
     {
-      for (auto x:_plugins)
+      for (auto x=_plugins.begin();x!=_plugins.end();x++)
 	{
-	  response[x->hardware()] = x->status();
+	  response[x->second.ptr()->hardware()] = x->second.ptr()->status();
 	}
     }
   else
@@ -215,18 +230,18 @@ void zdaq::lsc::monitor()
     {
     
       // ID
-      for (auto x:_plugins)
+      for (auto x=_plugins.begin();x!=_plugins.end();x++)
 	{
 	  if (_publisher!=NULL)
 	    {
 	      std::stringstream sheader;
-	      sheader<<x->hardware()<<"@"<<_params["location"].asString()<<"@"<<time(0);
+	      sheader<<x->second.ptr()->hardware()<<"@"<<_params["location"].asString()<<"@"<<time(0);
 	      std::string head=sheader.str();
     
 	      zmq::message_t ma1((void*)head.c_str(), head.length(), NULL); 
 	      _publisher->send(ma1, ZMQ_SNDMORE);
 	      // Status
-	      Json::Value jstatus=x->status();
+	      Json::Value jstatus=x->second.ptr()->status();
 	      std::string scont= fastWriter.write(jstatus);
 	      zmq::message_t ma2((void*)scont.c_str(), scont.length(), NULL); 
 
@@ -234,8 +249,8 @@ void zdaq::lsc::monitor()
 	      _publisher->send(ma2);
 	    }
 	  // Save the status in all conncted stores
-	  for (auto y:_stores)
-	    y->store(_params["location"].asString(),x->hardware(),(uint32_t) time(0),x->status());
+	  for (auto y=_stores.begin();y!=_stores.end();y++)
+	    y->second.ptr()->store(_params["location"].asString(),x->second.ptr()->hardware(),(uint32_t) time(0),x->second.ptr()->status());
 	}
       if (!_running) break;
       ::sleep(_period);
