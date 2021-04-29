@@ -168,6 +168,9 @@ file(GLOB MG_TARGET
 file(GLOB DAEMON_TARGET
      "${CMAKE_CURRENT_SOURCE_DIR}/scripts/*daemon"
      )
+file(GLOB SH_TARGET
+     "${CMAKE_CURRENT_SOURCE_DIR}/etc/*.sh"
+     )
    
 file(GLOB ETC_TARGET
      "${CMAKE_CURRENT_SOURCE_DIR}/etc/*.*"
@@ -182,7 +185,7 @@ file(GLOB INCLUDE_TARGET
 install(FILES ${INCLUDE_TARGET}  DESTINATION include )
 install(FILES ${SCRIPT_TARGET}  DESTINATION share )
 install(FILES ${ETC_TARGET} DESTINATION etc)
-install(FILES ${MG_TARGET} ${DAEMON_TARGET} DESTINATION bin)
+install(FILES ${MG_TARGET} ${DAEMON_TARGET} ${SH_TARGET} DESTINATION bin)
 
 install(TARGETS ljc  DESTINATION bin  ARCHIVE DESTINATION bin)
 install(CODE "execute_process(COMMAND chmod -R +x ${CMAKE_INSTALL_PREFIX}/bin/)")

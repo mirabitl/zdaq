@@ -180,19 +180,27 @@ void zdaq::monitoring::supervisor::registerStore(std::string name)
 {
   std::stringstream s;
   s << "lib" << name << ".so";
-  void *library = dlopen(s.str().c_str(), RTLD_NOW);
+  void *library_hdl = dlopen(s.str().c_str(), RTLD_NOW);
+  if(library_hdl == NULL)
+    {
+      LOG4CXX_FATAL(_logZdaq, " Error " << dlerror() << " Library open address " << std::hex << library_hdl << std::dec);
+      return;
+    }
 
-  //printf("%s %x \n",dlerror(),(unsigned int) library);
-  LOG4CXX_INFO(_logZdaq, " Error " << dlerror() << " Library open address " << std::hex << library << std::dec);
+  printf("%s %x \n",dlerror(),(unsigned int) library);
+  LOG4CXX_INFO(_logZdaq, "Library"<<s.str()<" is  opened at address " << std::hex << library_hdl << std::dec);
   // Get the loadFilter function, for loading objects
   zdaq::zmonStore *(*create)();
-  create = (zdaq::zmonStore * (*)()) dlsym(library, "loadStore");
-  LOG4CXX_INFO(_logZdaq, " Error " << dlerror() << " file " << s.str() << " loads to processor address " << std::hex << create << std::dec);
-  //printf("%s %x \n",dlerror(),(unsigned int) create);
-  // printf("%s lods to %x \n",s.str().c_str(),(unsigned int) create);
-  //void (*destroy)(Filter*);
-  // destroy = (void (*)(Filter*))dlsym(library, "deleteFilter");
-  // Get a new filter object
+  create = (zdaq::zmonStore * (*)()) dlsym(library_hdl, "loadStore");
+
+  if (create==NULL)
+    {
+      LOG4CXX_FATAL(_logZdaq, " Error " << dlerror() << " Cannot find loadStore method ");
+      return
+    }
+  LOG4CXX_INFO(_logZdaq, " loadStore method at  address " << std::hex << create << std::dec);
+
+  // Get a new zmonStore object
   zdaq::zmonStore *a = (zdaq::zmonStore *)create();
   _stores.push_back(a);
 

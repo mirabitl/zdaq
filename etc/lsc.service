@@ -1,13 +1,13 @@
 
 
 [Unit]
-Description=ZDAQ job control
+Description=ZDAQ slow control monitoring daemon
 After=tlp-init.service
 
 [Service]
 Type=forking
 RemainAfterExit=yes
-ExecStart=/bin/sh -c '/usr/local/zdaq/bin/ljcd.sh&'
+ExecStart=/bin/sh -c '/usr/local/zdaq/bin/lscd.sh&'
 
 [Install]
 WantedBy=multi-user.target
