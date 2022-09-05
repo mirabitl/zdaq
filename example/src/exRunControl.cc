@@ -15,7 +15,7 @@ int main()
   printf("parsing the config file \n");
   DOMConfigurator::configure("/etc/Log4cxxConfig.xml");
   //_logger->setLevel(log4cxx::Level::getInfo());
-  LOG4CXX_INFO (_logZdaq, "this is a info message, after parsing configuration file")
+  LOG4CXX_INFO (_logZdaq, "this is a info message, after parsing configuration file");
     std::stringstream s0;
   
   s0<<"RunControl";
